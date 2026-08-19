@@ -1,0 +1,25 @@
+minimum_cumulusci_version: '4.9.0'
+project:
+    name: ptc
+    package:
+        name: ptc
+        api_version: '65.0'
+    git:
+        default_branch: 'main'
+    source_format: sfdx
+
+tasks:
+    robot:
+        options:
+            suites: robot/ptc/tests
+            options:
+                outputdir: robot/ptc/results
+
+    robot_testdoc:
+        options:
+            path: robot/ptc/tests
+            output: robot/ptc/doc/ptc_tests.html
+
+    run_tests:
+        options:
+            required_org_code_coverage_percent: 75

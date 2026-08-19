@@ -1,0 +1,9 @@
+{
+  "permsetAssignments": {
+    "assignments": {
+      "ptc_Access": {
+        "assignee": "currentUser"
+      }
+    }
+  }
+}

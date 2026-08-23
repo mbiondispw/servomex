@@ -1,0 +1,46 @@
+# Negative fixture: identical content to approved-tracer.yaml, without a human
+# approval marker. Generation must be refused.
+
+revision: test-1
+
+approval:
+  approved: false
+
+source:
+  system: SAP
+  document: 07930B1 VC.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+  product_classification_name: NGL Lase 3 (B1)
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-sap-attributes
+
+categories:
+  - id: C7900_PART_HEADER
+    label: Analyser Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
+
+characteristics:
+  - id: C7900B_TPBASE
+    label: Type
+    disposition: generated
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 1
+    source:
+      page: 1
+      text: "C7900B_TPBASE                   Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"

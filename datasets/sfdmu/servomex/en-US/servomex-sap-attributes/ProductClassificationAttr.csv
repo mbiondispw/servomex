@@ -1,0 +1,2 @@
+Name,ProductClassification.Code,AttributeCategory.Code,AttributeDefinition.Code,AttributeNameOverride,DefaultValue,IsHidden,IsPriceImpacting,IsReadOnly,IsRequired,Sequence,Status
+SAP-CLASS_7930B-C7900B_TPBASE,SAP-CLASS_7930B,SAP-CLASS_7930B-C7900_PART_HEADER,SAP-CLASS_7930B-C7900B_TPBASE,Type,Laser 3 Plus,false,false,true,true,1,Active

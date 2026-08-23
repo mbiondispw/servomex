@@ -1,0 +1,50 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Code, DataType, Description, Id, Name, Status FROM AttributePicklist ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Abbreviation, Code, DisplayValue, Id, IsDefault, Name, PicklistId, Sequence, Status, Value FROM AttributePicklistValue ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, DataType, DefaultHelpText, Description, DeveloperName, Id, IsActive, IsRequired, Label, Name, PicklistId, SourceSystemIdentifier FROM AttributeDefinition ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, Description, Id, Name FROM AttributeCategory ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeCategory.Code, AttributeDefinitionId, AttributeDefinition.Code, Id FROM AttributeCategoryAttribute ORDER BY AttributeCategory.Code ASC, AttributeDefinition.Code ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeCategory.Code;AttributeDefinition.Code"
+    },
+    {
+      "query": "SELECT Code, Id, Name, ParentProductClassificationId, Status FROM ProductClassification ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, Name, ProductClassificationId, Sequence, Status FROM ProductClassificationAttr ORDER BY Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT BasedOnId, Id, StockKeepingUnit FROM Product2 WHERE StockKeepingUnit = '07930B1' ORDER BY StockKeepingUnit ASC",
+      "operation": "Update",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, Name, Product2Id, ProductClassificationAttributeId, Sequence, Status FROM ProductAttributeDefinition ORDER BY Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    }
+  ],
+  "apiVersion": "66.0"
+}

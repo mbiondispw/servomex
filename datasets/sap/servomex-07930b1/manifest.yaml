@@ -1,0 +1,96 @@
+# Approved SAP product attribute migration manifest.
+#
+# Authoritative, human-reviewed input for
+# scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
+# generated SFDMU CSVs carry ASCII-normalized operational values.
+
+revision: 1
+
+approval:
+  approved: true
+  approved_by: Martin Biondi
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: 07930B1 VC.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+  product_classification_name: NGL Lase 3 (B1)
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-sap-attributes
+
+categories:
+  - id: C7900_PART_HEADER
+    label: Analyser Base Config
+    description: Base configuration characteristics of the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 1
+      text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
+
+characteristics:
+  - id: C7900B_TPBASE
+    label: Type
+    description: Analyser base type for the SERVOTOUGH Laser 3 Plus.
+    disposition: generated
+    disposition_reason: >-
+      Product-specific "B" characteristic preferred over the overlapping generic
+      C7900_TPBASE.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 1
+    source:
+      page: 1
+      text: "C7900B_TPBASE                   Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"
+
+  - id: C7900_TPBASE
+    label: Type
+    disposition: superseded
+    superseded_by: C7900B_TPBASE
+    disposition_reason: >-
+      Generic variant of the same concept with an identical permitted-value set.
+    source:
+      page: 1
+      text: "C7900_TPBASE                    Type"
+
+  - id: CMATERIAL_NUMBER
+    label: Material Number
+    disposition: excluded
+    disposition_reason: >-
+      Duplicates Product identity already held by Product2.StockKeepingUnit.
+    source:
+      page: 1
+      text: "CMATERIAL_NUMBER                Material Number"
+
+  - id: C7900_DTP
+    label: Analyser Reference
+    disposition: source-control
+    disposition_reason: >-
+      SAP dependency-table reference. Documented for traceability; it is not a
+      selling choice and generates no Revenue Cloud records.
+    source:
+      page: 1
+      text: "C7900_DTP                       Analyser Reference"
+
+unresolved:
+  - id: CLASS_7930B-dependencies
+    reason: >-
+      The source document flags SAP dependency and variant-condition logic
+      through the Dep. column and icons, but does not contain the rules
+      themselves. No Revenue Cloud constraints were generated, and no generated
+      option combination is proven valid.

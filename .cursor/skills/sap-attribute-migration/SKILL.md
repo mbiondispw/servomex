@@ -31,7 +31,8 @@ SAP PDF  ──extract──▶  manifest.yaml  ──human approval──▶  g
    `approval.approved: true` is present with a reviewer and a date.
 4. **Codes are source-qualified.** `SAP-<class>-<characteristic>[-<value>]`.
    Raw SAP codes like `A`, `X`, `1`, `2` repeat across characteristics and can
-   never be Revenue Cloud record codes.
+   never be Revenue Cloud record codes. The generator rejects any minted
+   identity that is still a bare SAP code.
 5. **Source identity is preserved, not reused as identity.** SAP characteristic
    id → `AttributeDefinition.SourceSystemIdentifier`. SAP option code →
    `AttributePicklistValue.Abbreviation`.
@@ -116,6 +117,20 @@ python scripts/ai/generate_sap_attribute_migration.py \
 Exit codes: `0` generated (warnings possible), `1` usage/IO error, `2` manifest
 rejected. Rejections name the offending manifest path — fix the manifest, never
 the output.
+
+The generator refuses to emit a plan when:
+
+| Rejection | Fix |
+|-----------|-----|
+| The manifest is not approved | Get a reviewer to add the `approval` block |
+| A source node has no `id`, `label`, `disposition`, or `source` provenance | Complete the node |
+| A disposition or `type` is not one of the accepted values | Use an accepted value |
+| A retained characteristic has no `category`, or its category is not `generated` | Retain the section header as a category |
+| A `Picklist` characteristic has no retained values | Retain a value, or mark the characteristic `deferred` |
+| A non-`Picklist` characteristic declares values | Set `type: Picklist`, or drop the values |
+| Two nodes collapse onto one generated code | Disambiguate the source ids or value codes |
+| A minted identity is still a bare SAP code such as `A` or `1` | Give the source node a longer, source-specific id |
+| The record chain has a broken link, or a single-value attribute is not required, read-only, and defaulted | Report it — the generator should never produce this |
 
 ### 5. Review and validate
 

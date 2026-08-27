@@ -1,0 +1,25 @@
+minimum_cumulusci_version: '4.9.0'
+project:
+    name: servomex
+    package:
+        name: servomex
+        api_version: '67'
+    git:
+        default_branch: 'main'
+    source_format: sfdx
+
+tasks:
+    robot:
+        options:
+            suites: robot/servomex/tests
+            options:
+                outputdir: robot/servomex/results
+
+    robot_testdoc:
+        options:
+            path: robot/servomex/tests
+            output: robot/servomex/doc/servomex_tests.html
+
+    run_tests:
+        options:
+            required_org_code_coverage_percent: 75

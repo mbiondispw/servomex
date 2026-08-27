@@ -1,2 +1,11 @@
 Code,Name,Label,DeveloperName,DataType,Description,IsActive,IsRequired,Picklist.Code,SourceSystemIdentifier,DefaultHelpText
+SAP-CLASS_7930B-C7900B_TP02,"Measurement 1, Range (C7900B_TP02)","Measurement 1, Range",C7900B_TP02,Picklist,Measuring range for the primary measured component.,true,false,SAP-CLASS_7930B-C7900B_TP02-PL,C7900B_TP02,
+SAP-CLASS_7930B-C7900B_TP03,Measurement 2 (C7900B_TP03),Measurement 2,C7900B_TP03,Picklist,"Second measured component, or None when only one is measured.",true,false,SAP-CLASS_7930B-C7900B_TP03-PL,C7900B_TP03,
+SAP-CLASS_7930B-C7900B_TP04,"Measurement 2, Range (C7900B_TP04)","Measurement 2, Range",C7900B_TP04,Picklist,Measuring range for the second measured component.,true,false,SAP-CLASS_7930B-C7900B_TP04-PL,C7900B_TP04,
+SAP-CLASS_7930B-C7900B_TP07,Area Classification (C7900B_TP07),Area Classification,C7900B_TP07,Picklist,Hazardous-area certification the analyser is supplied against.,true,false,SAP-CLASS_7930B-C7900B_TP07-PL,C7900B_TP07,
+SAP-CLASS_7930B-C7900B_TP08,Total Path Length (C7900B_TP08),Total Path Length,C7900B_TP08,Picklist,"Optical path length band, which sets the beam optics supplied.",true,false,SAP-CLASS_7930B-C7900B_TP08-PL,C7900B_TP08,
+SAP-CLASS_7930B-C7900B_TP09,Additional Inputs/Outputs (C7900B_TP09),Additional Inputs/Outputs,C7900B_TP09,Picklist,Whether additional analogue and alarm I/O is supplied.,true,false,SAP-CLASS_7930B-C7900B_TP09-PL,C7900B_TP09,
+SAP-CLASS_7930B-C7900B_TP10,Pressure / Temp (C7900B_TP10),Pressure / Temp,C7900B_TP10,Picklist,Process pressure and temperature envelope the analyser is built for.,true,false,SAP-CLASS_7930B-C7900B_TP10-PL,C7900B_TP10,
 SAP-CLASS_7930B-C7900B_TPBASE,Type (C7900B_TPBASE),Type,C7900B_TPBASE,Picklist,Analyser base type for the SERVOTOUGH Laser 3 Plus.,true,true,SAP-CLASS_7930B-C7900B_TPBASE-PL,C7900B_TPBASE,
+SAP-CLASS_7930B-C7900_APPLICATION_DETAIL,Application Detail (C7900_APPLICATION_DETAIL),Application Detail,C7900_APPLICATION_DETAIL,Picklist,Process application the analyser is being supplied for.,true,false,SAP-CLASS_7930B-C7900_APPLICATION_DETAIL-PL,C7900_APPLICATION_DETAIL,
+SAP-CLASS_7930B-C7900_TP05,Measurement 3 (C7900_TP05),Measurement 3,C7900_TP05,Picklist,Third measured component. Not offered on this analyser.,true,true,SAP-CLASS_7930B-C7900_TP05-PL,C7900_TP05,

@@ -4,12 +4,12 @@
 # scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
 # generated SFDMU CSVs carry ASCII-normalized operational values.
 
-revision: 1
+revision: 2
 
 approval:
   approved: true
   approved_by: Martin Biondi
-  approved_on: 2026-08-23
+  approved_on: 2026-08-27
 
 source:
   system: SAP
@@ -37,6 +37,83 @@ categories:
       text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
 
 characteristics:
+  # --- Source nodes preceding the first section header ---------------------
+
+  - id: CMATERIAL_NUMBER
+    label: Material Number
+    disposition: excluded
+    disposition_reason: >-
+      Duplicates Product identity already held by Product2.StockKeepingUnit.
+    source:
+      page: 1
+      text: "CMATERIAL_NUMBER                Material Number"
+
+  - id: CSIPS_MTL
+    label: SIPS Material
+    disposition: excluded
+    disposition_reason: >-
+      Internal SAP material-handling classification (SIPS Material versus STD
+      Material). A supply-chain flag, not a selling choice.
+    source:
+      page: 1
+      text: "CSIPS_MTL                       SIPS Material"
+
+  - id: C7931_PRODUCT_RELEASED_2
+    label: Product Released
+    disposition: excluded
+    disposition_reason: >-
+      Release control listing which product options are released for SAP order
+      entry. Its permitted values are release flags, and 12 of the 26 are
+      explicitly deprecated ("- Not Used" on 002-011 and 016, "- NU" on 013).
+      Neither the released nor the deprecated flags become selling choices, so
+      none of them reach an active Revenue Cloud picklist.
+    source:
+      page: 1
+      text: "C7931_PRODUCT_RELEASED_2        079301A1 Product Released"
+
+  - id: C7900_P_BLOCK
+    label: Pressure Block
+    disposition: excluded
+    disposition_reason: >-
+      Release control (BLK Block / REL Release) gating pressure-restricted
+      configurations in SAP order entry, not a selling choice.
+    source:
+      page: 1
+      text: "C7900_P_BLOCK                   Pressure Block"
+
+  - id: C7900_DTP
+    label: Analyser Reference
+    disposition: source-control
+    disposition_reason: >-
+      SAP dependency-table reference. Documented for traceability; it is not a
+      selling choice and generates no Revenue Cloud records.
+    source:
+      page: 1
+      text: "C7900_DTP                       Analyser Reference"
+
+  - id: C7900_MTG_DTP
+    label: Mounting Reference
+    disposition: source-control
+    disposition_reason: >-
+      SAP dependency-table reference for mounting. Documented for traceability;
+      it is not a selling choice and generates no Revenue Cloud records.
+    source:
+      page: 1
+      text: "C7900_MTG_DTP                   Mounting Reference"
+
+  - id: C7900_ACC_DTP
+    label: Accessories Reference
+    disposition: source-control
+    disposition_reason: >-
+      SAP dependency-table reference for accessories. Documented for
+      traceability; it is not a selling choice and generates no Revenue Cloud
+      records.
+    source:
+      page: 1
+      text: "C7900_ACC_DTP                   Accessories Reference"
+
+  # --- ANALYSER BASE CONFIG ------------------------------------------------
+
   - id: C7900B_TPBASE
     label: Type
     description: Analyser base type for the SERVOTOUGH Laser 3 Plus.
@@ -51,7 +128,7 @@ characteristics:
       page: 1
       text: "C7900B_TPBASE                   Type"
     values:
-      - code: 07931B1
+      - code: "07931B1"
         label: Laser 3 Plus
         disposition: generated
         source:
@@ -68,24 +145,610 @@ characteristics:
       page: 1
       text: "C7900_TPBASE                    Type"
 
-  - id: CMATERIAL_NUMBER
-    label: Material Number
-    disposition: excluded
-    disposition_reason: >-
-      Duplicates Product identity already held by Product2.StockKeepingUnit.
-    source:
-      page: 1
-      text: "CMATERIAL_NUMBER                Material Number"
-
-  - id: C7900_DTP
-    label: Analyser Reference
+  - id: CGEN_LABEL_01
+    label: Label Char 01
     disposition: source-control
     disposition_reason: >-
-      SAP dependency-table reference. Documented for traceability; it is not a
-      selling choice and generates no Revenue Cloud records.
+      SAP configuration-screen label placeholder. It carries no permitted values
+      and no selling choice.
     source:
-      page: 1
-      text: "C7900_DTP                       Analyser Reference"
+      page: 2
+      text: "CGEN_LABEL_01                   Label Char 01"
+
+  - id: C7900B_TPBASE_DESC
+    label: Type Desc
+    disposition: excluded
+    disposition_reason: >-
+      Descriptive echo of the retained Type characteristic. Its permitted values
+      name whole product families, including SERVOTOUGH Laser SPII Max, so
+      exposing it would duplicate Product identity and offer a product the SKU
+      is not.
+    source:
+      page: 2
+      text: "C7900B_TPBASE_DESC              Type Desc"
+
+  - id: C7900B_TP01
+    label: Measurement 1
+    disposition: deferred
+    disposition_reason: >-
+      The source lists no permitted values and no data type for the primary
+      measured component, so its Revenue Cloud type cannot be confirmed. The
+      companion C7900B_TP02 Measurement 1, Range is retained.
+    source:
+      page: 2
+      text: "C7900B_TP01                     Measurement 1"
+
+  - id: CGEN_LABEL_02
+    label: Label Char 02
+    disposition: source-control
+    disposition_reason: >-
+      SAP configuration-screen label placeholder. It carries no permitted values
+      and no selling choice.
+    source:
+      page: 2
+      text: "CGEN_LABEL_02                   Label Char 02"
+
+  - id: C7900B_TP02
+    label: Measurement 1, Range
+    description: Measuring range for the primary measured component.
+    disposition: generated
+    disposition_reason: Retained selling choice for the primary measuring range.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 2
+    source:
+      page: 2
+      text: "C7900B_TP02                     Measurement 1, Range"
+    values:
+      - code: "A"
+        label: 0-10 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "A                           0-10 ppm"
+      - code: "B"
+        label: 0-15 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "B                           0-15 ppm"
+      - code: "C"
+        label: 0-25 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "C                           0-25 ppm"
+      - code: "D"
+        label: 0-50 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "D                           0-50 ppm"
+      - code: "E"
+        label: 0-100 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "E                           0-100 ppm"
+      - code: "F"
+        label: 0-200 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "F                           0-200 ppm"
+      - code: "G"
+        label: 0-250 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "G                           0-250 ppm"
+      - code: "H"
+        label: 0-500 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "H                           0-500 ppm"
+      - code: "J"
+        label: 0-1000 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "J                           0-1000 ppm"
+      - code: "K"
+        label: 0-2500 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "K                           0-2500 ppm"
+      - code: "L"
+        label: 0-5000 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "L                           0-5000 ppm"
+      - code: "M"
+        label: 0-10000 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "M                           0-10000 ppm"
+      - code: "N"
+        label: 0-20000 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "N                           0-20000 ppm"
+      - code: "O"
+        label: 0-50000 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "O                           0-50000 ppm"
+      - code: "R"
+        label: 0-1 %
+        disposition: generated
+        source:
+          page: 2
+          text: "R                           0-1 %"
+      - code: "S"
+        label: 0-5 %
+        disposition: generated
+        source:
+          page: 2
+          text: "S                           0-5 %"
+      - code: "T"
+        label: 0-10 %
+        disposition: generated
+        source:
+          page: 2
+          text: "T                           0-10 %"
+      - code: "U"
+        label: 0-21 %
+        disposition: generated
+        source:
+          page: 2
+          text: "U                           0-21 %"
+      - code: "V"
+        label: 0-25 %
+        disposition: generated
+        source:
+          page: 2
+          text: "V                           0-25 %"
+      - code: "W"
+        label: 0-100 %
+        disposition: generated
+        source:
+          page: 2
+          text: "W                           0-100 %"
+      - code: "Z"
+        label: Custom Range
+        disposition: generated
+        source:
+          page: 2
+          text: "Z                           Custom Range"
+
+  - id: C7900B_CUSTOM_RANGE_INFO_1
+    label: Add Custom Range Info Into Sales Production Memo Text
+    disposition: excluded
+    disposition_reason: >-
+      SAP operator instruction rather than a selling choice. The short text wraps
+      across the characteristic and its single option to read "ADD CUSTOM RANGE
+      INFO INTO SALES PRODUCTION MEMO TEXT", telling order entry where to record
+      the detail behind C7900B_TP02 option Z Custom Range.
+    source:
+      page: 2
+      text: "C7900B_CUSTOM_RANGE_INFO_1      ADD CUSTOM RANGE INFO INTO"
+
+  - id: C7900B_TP03
+    label: Measurement 2
+    description: Second measured component, or None when only one is measured.
+    disposition: generated
+    disposition_reason: >-
+      Product-specific "B" characteristic preferred over the overlapping generic
+      C7900_TP03.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 3
+    source:
+      page: 2
+      text: "C7900B_TP03                     Measurement 2"
+    values:
+      - code: "E"
+        label: CH4
+        disposition: generated
+        source:
+          page: 2
+          text: "E                           CH4"
+      - code: "X"
+        label: None
+        disposition: generated
+        source:
+          page: 2
+          text: "X                           None"
+
+  - id: C7900_TP03
+    label: Measurement 2
+    disposition: superseded
+    superseded_by: C7900B_TP03
+    disposition_reason: >-
+      Generic variant of the same concept. Its wider value set (A O2 Low Temp
+      (<500 deg C) and H H2O) is not offered on this product, so only the
+      product-specific value set is retained.
+    source:
+      page: 2
+      text: "C7900_TP03                      Measurement 2"
+
+  - id: CGEN_LABEL_03
+    label: Label Char 03
+    disposition: source-control
+    disposition_reason: >-
+      SAP configuration-screen label placeholder. It carries no permitted values
+      and no selling choice.
+    source:
+      page: 2
+      text: "CGEN_LABEL_03                   Label Char 03"
+
+  - id: C7900B_TP04
+    label: Measurement 2, Range
+    description: Measuring range for the second measured component.
+    disposition: generated
+    disposition_reason: >-
+      Product-specific "B" characteristic preferred over the overlapping generic
+      C7900_TP04.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 4
+    source:
+      page: 2
+      text: "C7900B_TP04                     Measurement 2, Range"
+    values:
+      - code: "R"
+        label: 0-1 %
+        disposition: generated
+        source:
+          page: 2
+          text: "R                           0-1 %"
+      - code: "S"
+        label: 0-5 %
+        disposition: generated
+        source:
+          page: 2
+          text: "S                           0-5 %"
+      - code: "T"
+        label: 0-10 %
+        disposition: generated
+        source:
+          page: 2
+          text: "T                           0-10 %"
+      - code: "V"
+        label: 0-25 %
+        disposition: generated
+        source:
+          page: 2
+          text: "V                           0-25 %"
+      - code: "W"
+        label: 0-50 %
+        disposition: generated
+        source:
+          page: 2
+          text: "W                           0-50 %"
+
+  - id: C7900_TP04
+    label: Measurement 2, Range
+    disposition: superseded
+    superseded_by: C7900B_TP04
+    disposition_reason: >-
+      Generic variant of the same concept. Its extra X None value is redundant
+      because C7900B_TP03 Measurement 2 already carries the None choice.
+    source:
+      page: 2
+      text: "C7900_TP04                      Measurement 2, Range"
+
+  - id: C7900_TP05
+    label: Measurement 3
+    description: Third measured component. Not offered on this analyser.
+    disposition: generated
+    disposition_reason: >-
+      Retained as a fixed fact. The source permits one value, so the attribute is
+      required, read-only, and defaulted.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 5
+    source:
+      page: 3
+      text: "C7900_TP05                      Measurement 3"
+    values:
+      - code: "X"
+        label: Not Applicable
+        disposition: generated
+        source:
+          page: 3
+          text: "X                           Not Applicable"
+
+  - id: C7900_TP06
+    label: Measurement 3, Range
+    disposition: deferred
+    disposition_reason: >-
+      The source lists no permitted values and no data type. Measurement 3 is
+      Not Applicable on this analyser, so its range has nothing to model yet.
+    source:
+      page: 3
+      text: "C7900_TP06                      Measurement 3, Range"
+
+  - id: C7900B_TP07
+    label: Area Classification
+    description: Hazardous-area certification the analyser is supplied against.
+    disposition: generated
+    disposition_reason: Retained selling choice for hazardous-area certification.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 6
+    source:
+      page: 3
+      text: "C7900B_TP07                     Area Classification"
+    values:
+      - code: "1"
+        label: Safe Area
+        disposition: generated
+        source:
+          page: 3
+          text: "1                           Safe Area"
+      - code: "2"
+        label: ATEX GAS Cat 3G/IECEx Zone 2
+        disposition: generated
+        source:
+          page: 3
+          text: "2                           ATEX GAS Cat 3G/IECEx Zone 2"
+      - code: "3"
+        label: North American Class 1 Div 2
+        disposition: generated
+        source:
+          page: 3
+          text: "3                           North American Class 1 Div 2"
+      - code: "4"
+        label: ATEX DUST Cat 2D/IECEx Zone 21
+        disposition: generated
+        source:
+          page: 3
+          text: "4                           ATEX DUST Cat 2D/IECEx Zone 21"
+      - code: "5"
+        label: EU2G ATEX 3(2)G/IEC Z2-PZ1 G
+        disposition: generated
+        source:
+          page: 3
+          text: "5                           EU2G ATEX 3(2)G/IEC Z2-PZ1 G"
+      - code: "6"
+        label: EU2G ATEX 3G(1D)/IEC Z2-PZ20 D
+        disposition: generated
+        source:
+          page: 3
+          text: "6                           EU2G ATEX 3G(1D)/IEC Z2-PZ20 D"
+      - code: "7"
+        label: EU1D ATEX 2(1)D/IEC Z21-PZ20 D
+        disposition: generated
+        source:
+          page: 3
+          text: "7                           EU1D ATEX 2(1)D/IEC Z21-PZ20 D"
+      - code: "8"
+        label: EU1D ATEX 2D(2G)/IEC Z21-PZ1 G
+        disposition: generated
+        source:
+          page: 3
+          text: "8                           EU1D ATEX 2D(2G)/IEC Z21-PZ1 G"
+      - code: "9"
+        label: General Purpose
+        disposition: generated
+        source:
+          page: 3
+          text: "9                           General Purpose"
+
+  - id: CGEN_LABEL_04
+    label: Label Char 04
+    disposition: source-control
+    disposition_reason: >-
+      SAP configuration-screen label placeholder. It carries no permitted values
+      and no selling choice.
+    source:
+      page: 3
+      text: "CGEN_LABEL_04                   Label Char 04"
+
+  - id: C7900B_TP08
+    label: Total Path Length
+    description: Optical path length band, which sets the beam optics supplied.
+    disposition: generated
+    disposition_reason: Retained selling choice for the optical path length band.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 7
+    source:
+      page: 3
+      text: "C7900B_TP08                     Total Path Length"
+    values:
+      # "Colimated" is an unambiguous source misspelling: page 6 spells the same
+      # optics "Collimated Beam".
+      - code: "A"
+        label: Short P/L - Collimated Beam
+        disposition: generated
+        source:
+          page: 3
+          text: "A                           Short P/L - Colimated Beam"
+      - code: "B"
+        label: Medium P/L - Standard Optics
+        disposition: generated
+        source:
+          page: 3
+          text: "B                           Medium P/L - Standard Optics"
+      - code: "C"
+        label: Long P/L - Divergent Optics
+        disposition: generated
+        source:
+          page: 3
+          text: "C                           Long P/L - Divergent Optics"
+
+  - id: C7900B_TP09
+    label: Additional Inputs/Outputs
+    description: Whether additional analogue and alarm I/O is supplied.
+    disposition: generated
+    disposition_reason: Retained selling choice for additional analyser I/O.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 8
+    source:
+      page: 3
+      text: "C7900B_TP09                     Additional Inputs/Outputs"
+    values:
+      - code: "1"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 3
+          text: "1                           Not Required"
+      - code: "2"
+        label: Required
+        disposition: generated
+        source:
+          page: 3
+          text: "2                           Required"
+
+  - id: C7900B_TP10
+    label: Pressure / Temp
+    description: Process pressure and temperature envelope the analyser is built for.
+    disposition: generated
+    disposition_reason: >-
+      Retained selling choice for the process pressure and temperature envelope.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 9
+    source:
+      page: 3
+      text: "C7900B_TP10                     Pressure / Temp"
+    values:
+      - code: "A"
+        label: "<= 1.5barA & <=500\xB0C"
+        disposition: generated
+        source:
+          page: 3
+          text: "A                           <= 1.5barA & <=500\xB0C"
+      - code: "B"
+        label: ">1.5barA to 16barA & <=500\xB0C"
+        disposition: generated
+        source:
+          page: 3
+          text: "B                           >1.5barA to 16barA & <=500\xB0C"
+      - code: "D"
+        label: "<= 1.5barA & >500\xB0C"
+        disposition: generated
+        source:
+          page: 3
+          text: "D                           <= 1.5barA & >500\xB0C"
+      - code: "E"
+        label: ">1.5barA to 16barA & >500\xB0C"
+        disposition: generated
+        source:
+          page: 3
+          text: "E                           >1.5barA to 16barA & >500\xB0C"
+
+  - id: C7900_APPLICATION_DETAIL
+    label: Application Detail
+    description: Process application the analyser is being supplied for.
+    disposition: generated
+    disposition_reason: >-
+      Retained selling choice. No product-specific "B" variant exists, so the
+      generic characteristic is the one retained.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 10
+    source:
+      page: 3
+      text: "C7900_APPLICATION_DETAIL        Application Detail"
+    values:
+      - code: "OC01"
+        label: In-Situ, Flare / Safety Cntl
+        disposition: generated
+        source:
+          page: 3
+          text: "OC01                        In-Situ, Flare / Safety Cntl"
+      - code: "OC02"
+        label: Extractive, Titanium Cntl
+        disposition: generated
+        source:
+          page: 3
+          text: "OC02                        Extractive, Titanium Cntl"
+      - code: "OC03"
+        label: In-Situ, Temp Combustion Cntl
+        disposition: generated
+        source:
+          page: 3
+          text: "OC03                        In-Situ, Temp Combustion Cntl"
+      - code: "OH01"
+        label: In-Situ, High Temp Comb Cntl
+        disposition: generated
+        source:
+          page: 3
+          text: "OH01                        In-Situ, High Temp Comb Cntl"
+      - code: "OH02"
+        label: In-Situ, Fluidised Cat Unit
+        disposition: generated
+        source:
+          page: 3
+          text: "OH02                        In-Situ, Fluidised Cat Unit"
+      - code: "NH3S"
+        label: Slip
+        disposition: generated
+        source:
+          page: 3
+          text: "NH3S                        Slip"
+      - code: "NH3E"
+        label: Emissions Monitoring
+        disposition: generated
+        source:
+          page: 3
+          text: "NH3E                        Emissions Monitoring"
+      - code: "SL"
+        label: Slip.
+        disposition: generated
+        source:
+          page: 3
+          text: "SL                          Slip."
+      - code: "SA"
+        label: Safety
+        disposition: generated
+        source:
+          page: 3
+          text: "SA                          Safety"
+      - code: "CC"
+        label: Combustion Control
+        disposition: generated
+        source:
+          page: 3
+          text: "CC                          Combustion Control"
+      - code: "PE"
+        label: Process Efficiency
+        disposition: generated
+        source:
+          page: 3
+          text: "PE                          Process Efficiency"
+      - code: "QU"
+        label: Quality
+        disposition: generated
+        source:
+          page: 3
+          text: "QU                          Quality"
+      - code: "EM"
+        label: Emissions Monitoring.
+        disposition: generated
+        source:
+          page: 3
+          text: "EM                          Emissions Monitoring."
+      - code: "XX"
+        label: "Null"
+        disposition: excluded
+        disposition_reason: >-
+          SAP null placeholder, not a customer-facing application. Leaving
+          Application Detail unset already expresses no selection.
+        source:
+          page: 3
+          text: "XX                          Null"
 
 unresolved:
   - id: CLASS_7930B-dependencies
@@ -94,3 +757,9 @@ unresolved:
       through the Dep. column and icons, but does not contain the rules
       themselves. No Revenue Cloud constraints were generated, and no generated
       option combination is proven valid.
+  - id: C7900B_TP01-measurement-1
+    reason: >-
+      The source supplies a Measurement 1, Range permitted-value set but no
+      permitted values or data type for Measurement 1 itself, so the primary
+      measured component is deferred and the retained range has no measured
+      component to qualify.

@@ -250,6 +250,98 @@ assert_subset "$RUN_A/ProductClassificationAttr.csv" "ProductClassification.Code
     "$RUN_A/ProductClassification.csv" "Code" \
     "every assignment references the generated classification"
 
+# --- The approved SERVOTOUGH conversion ------------------------------------
+echo ""
+echo "Test 13: the approved SERVOTOUGH manifest converts Analyser Base Config"
+RUN_SERVOMEX="$WORK_DIR/run-servomex"
+"$PYTHON" "$GENERATOR" \
+    --manifest "$REPO_ROOT/datasets/sap/servomex-07930b1/manifest.yaml" \
+    --output-dir "$RUN_SERVOMEX" >"$WORK_DIR/run-servomex.log" 2>&1
+EXIT_CODE=$?
+if [[ $EXIT_CODE -eq 0 ]]; then pass "exit code 0"; else fail "exit code 0 (got $EXIT_CODE)"; cat "$WORK_DIR/run-servomex.log"; fi
+
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_PART_HEADER,Analyser Base Config" \
+    "the section header becomes the Analyser Base Config category"
+
+for characteristic in C7900B_TPBASE C7900B_TP02 C7900B_TP03 C7900B_TP04 C7900_TP05 \
+    C7900B_TP07 C7900B_TP08 C7900B_TP09 C7900B_TP10 C7900_APPLICATION_DETAIL; do
+    code="SAP-CLASS_7930B-$characteristic"
+    assert_contains "$RUN_SERVOMEX/AttributePicklist.csv" "$code-PL," \
+        "$characteristic has a permitted-value set"
+    assert_contains "$RUN_SERVOMEX/AttributeDefinition.csv" "$code-PL,$characteristic," \
+        "$characteristic has an attribute definition keyed to its SAP id"
+    assert_contains "$RUN_SERVOMEX/AttributeCategoryAttribute.csv" \
+        "SAP-CLASS_7930B-C7900_PART_HEADER;$code" \
+        "$characteristic sits in Analyser Base Config"
+    assert_contains "$RUN_SERVOMEX/ProductClassificationAttr.csv" \
+        "$code,SAP-CLASS_7930B,SAP-CLASS_7930B-C7900_PART_HEADER,$code," \
+        "$characteristic is assigned at classification level"
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$code-07930B1,07930B1,$code," \
+        "$characteristic is bound to product 07930B1"
+done
+
+echo ""
+echo "Test 14: retained option sets carry their source codes and labels"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TP02-Z,Custom Range,Custom Range,Custom Range,Z," \
+    "Measurement 1, Range keeps its custom-range option"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TP07-4,ATEX DUST Cat 2D/IECEx Zone 21," \
+    "Area Classification keeps its hazardous-area certifications"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TP09-2,Required," \
+    "Additional Inputs/Outputs keeps both options"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TP10-B,>1.5barA to 16barA & <=500 deg C," \
+    "Pressure / Temp bands are ASCII-normalized"
+assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+    "Measurement 3,Not Applicable,false,false,true,true," \
+    "the sole permitted value is defaulted, read-only, and required"
+assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+    "Area Classification,,false,false,false,false," \
+    "a multi-value choice stays optional and editable with no invented default"
+
+echo ""
+echo "Test 15: Analyser Base Config curation is reported and never generated"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "superseded by C7900B_TP03" \
+    "the generic Measurement 2 is linked to its retained variant"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "superseded by C7900B_TP04" \
+    "the generic Measurement 2, Range is linked to its retained variant"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" \
+    'explicitly deprecated ("- Not Used" on 002-011 and 016, "- NU" on 013)' \
+    "deprecated Not Used and NU options are reported with a reason"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" \
+    "| \`C7900_APPLICATION_DETAIL\` | \`XX\` | Null |" \
+    "the SAP null placeholder is reported as an excluded permitted value"
+
+for silent in CMATERIAL_NUMBER C7931_PRODUCT_RELEASED_2 C7900_P_BLOCK CSIPS_MTL \
+    C7900B_TPBASE_DESC C7900B_CUSTOM_RANGE_INFO_1 C7900B_TP01 C7900_TP06 \
+    CGEN_LABEL_01 C7900_MTG_DTP; do
+    assert_contains "$RUN_SERVOMEX/conversion-report.md" "\`$silent\`" \
+        "report accounts for $silent"
+    if grep -rqF -- "$silent" "$RUN_SERVOMEX"/*.csv; then
+        fail "$silent produces no Revenue Cloud rows"
+    else
+        pass "$silent produces no Revenue Cloud rows"
+    fi
+done
+
+echo ""
+echo "Test 16: only unambiguous source spelling is corrected"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TP08-A,Short P/L - Collimated Beam," \
+    "the Colimated Beam misspelling is corrected for customers"
+if grep -rqF -- "Colimated" "$RUN_SERVOMEX"; then
+    fail "the misspelling survives only in the manifest"
+else
+    pass "the misspelling survives only in the manifest"
+fi
+assert_contains "$REPO_ROOT/datasets/sap/servomex-07930b1/manifest.yaml" \
+    "Short P/L - Colimated Beam" \
+    "exact source text stays traceable in the manifest"
+
 echo ""
 echo "========================================="
 echo "Passed: $PASS   Failed: $FAIL"

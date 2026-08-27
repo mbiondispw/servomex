@@ -1,2 +1,11 @@
 Code,Name,DataType,Description,Status
+SAP-CLASS_7930B-C7900B_TP02-PL,"Measurement 1, Range (C7900B_TP02)",Text,Permitted-value set for SAP characteristic C7900B_TP02,Active
+SAP-CLASS_7930B-C7900B_TP03-PL,Measurement 2 (C7900B_TP03),Text,Permitted-value set for SAP characteristic C7900B_TP03,Active
+SAP-CLASS_7930B-C7900B_TP04-PL,"Measurement 2, Range (C7900B_TP04)",Text,Permitted-value set for SAP characteristic C7900B_TP04,Active
+SAP-CLASS_7930B-C7900B_TP07-PL,Area Classification (C7900B_TP07),Text,Permitted-value set for SAP characteristic C7900B_TP07,Active
+SAP-CLASS_7930B-C7900B_TP08-PL,Total Path Length (C7900B_TP08),Text,Permitted-value set for SAP characteristic C7900B_TP08,Active
+SAP-CLASS_7930B-C7900B_TP09-PL,Additional Inputs/Outputs (C7900B_TP09),Text,Permitted-value set for SAP characteristic C7900B_TP09,Active
+SAP-CLASS_7930B-C7900B_TP10-PL,Pressure / Temp (C7900B_TP10),Text,Permitted-value set for SAP characteristic C7900B_TP10,Active
 SAP-CLASS_7930B-C7900B_TPBASE-PL,Type (C7900B_TPBASE),Text,Permitted-value set for SAP characteristic C7900B_TPBASE,Active
+SAP-CLASS_7930B-C7900_APPLICATION_DETAIL-PL,Application Detail (C7900_APPLICATION_DETAIL),Text,Permitted-value set for SAP characteristic C7900_APPLICATION_DETAIL,Active
+SAP-CLASS_7930B-C7900_TP05-PL,Measurement 3 (C7900_TP05),Text,Permitted-value set for SAP characteristic C7900_TP05,Active

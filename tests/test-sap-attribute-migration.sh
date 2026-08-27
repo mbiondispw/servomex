@@ -469,6 +469,107 @@ for reference in C7900_TPA210 C7900B_TPACCESSORIES; do
 done
 
 echo ""
+echo "Test 23: the approved SERVOTOUGH manifest converts Manuals and Accessories"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_MANUALS_HEADER,Manuals" \
+    "the manuals section header becomes the Manuals category"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_ACCESSORIES_HEADER,Accessories" \
+    "the accessories section header becomes the Accessories category"
+
+for characteristic in C7900_USER_MANUALS C7900_SERVICE_MANUALS C7900_FUN_SAFETY_MANUAL; do
+    assert_chain "$characteristic" C7900_MANUALS_HEADER
+done
+for characteristic in C7900_ALIGNMENT_TOOLS C7900_CALIBRATION_CELL \
+    C7900_INTERCONNECT_CABLE C7900_INTERCONNECT_CABLE_QTY; do
+    assert_chain "$characteristic" C7900_ACCESSORIES_HEADER
+done
+
+assert_sequence() {
+    local characteristic="$1" expected="$2"
+    local code="SAP-CLASS_7930B-$characteristic"
+    local row
+    row="$(grep -F "$code,SAP-CLASS_7930B," "$RUN_SERVOMEX/ProductClassificationAttr.csv")"
+    if [[ "$row" == *",$expected,Active" ]]; then
+        pass "$characteristic keeps source position $expected"
+    else
+        fail "$characteristic keeps source position $expected (got: $row)"
+    fi
+}
+
+assert_sequence C7900_USER_MANUALS 33
+assert_sequence C7900_SERVICE_MANUALS 34
+assert_sequence C7900_FUN_SAFETY_MANUAL 35
+assert_sequence C7900_ALIGNMENT_TOOLS 36
+assert_sequence C7900_CALIBRATION_CELL 37
+assert_sequence C7900_INTERCONNECT_CABLE 38
+assert_sequence C7900_INTERCONNECT_CABLE_QTY 39
+
+echo ""
+echo "Test 24: fixed manual facts are required, read-only, and defaulted"
+assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+    "User / Installation,English,false,false,true,true," \
+    "the sole user manual language is defaulted, read-only, and required"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_USER_MANUALS-E,English,English,English,E,SAP-CLASS_7930B-C7900_USER_MANUALS-PL,1,true,Active" \
+    "the sole user manual language is the picklist default"
+for optional in "Service" "Functional Safety"; do
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$optional,,false,false,false,false," \
+        "$optional manual stays optional and editable with no invented default"
+done
+
+echo ""
+echo "Test 25: accessory option sets keep their source codes and policy"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_ALIGNMENT_TOOLS-C,Short & Long Pathlength,Short & Long Pathlength,Short & Long Pathlength,C," \
+    "Alignment Tool keeps its combined pathlength option"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_CALIBRATION_CELL-5,1000mm,1000mm,1000mm,5," \
+    "Calibration Cell Kit keeps its longest cell"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_INTERCONNECT_CABLE-S,Servomex Standard,Servomex Standard,Servomex Standard,S," \
+    "Interconnection cable keeps the Servomex supply option"
+for accessory in "Alignment Tool" "Calibration Cell Kit" "Interconnection cable" \
+    "Interconnection Cable length"; do
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$accessory,,false,false,false,false," \
+        "$accessory stays optional and editable with no invented default"
+done
+
+echo ""
+echo "Test 26: cable lengths stay distinguishable and traceable after normalization"
+CABLE_PL="SAP-CLASS_7930B-C7900_INTERCONNECT_CABLE_QTY-PL"
+sequence=0
+for length in "5 m" "10 m" "15 m" "20 m" "25 m" "30 m" "40 m" "50 m"; do
+    sequence=$((sequence + 1))
+    assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+        "SAP-CLASS_7930B-C7900_INTERCONNECT_CABLE_QTY-$length,$length,$length,$length,$length,$CABLE_PL,$sequence,false,Active" \
+        "cable length $length keeps a distinct code, display value, and source abbreviation"
+done
+CABLE_ROWS="$(grep -cF "$CABLE_PL," "$RUN_SERVOMEX/AttributePicklistValue.csv")"
+if [[ "$CABLE_ROWS" == "8" ]]; then
+    pass "the eight cable lengths do not collapse onto one another"
+else
+    fail "the eight cable lengths do not collapse onto one another (got $CABLE_ROWS)"
+fi
+
+echo ""
+echo "Test 27: deprecated and reference-only accessory nodes stay out of active picklists"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" \
+    "009 Alignment Tool - Not Used" \
+    "the deprecated alignment-tool accessory flag is reported with its reason"
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "\`C7900_TPA220A\` |" \
+    "report accounts for C7900_TPA220A"
+if grep -rqF -- "C7900_TPA220A" "$RUN_SERVOMEX"/*.csv; then
+    fail "C7900_TPA220A produces no Revenue Cloud rows"
+else
+    pass "C7900_TPA220A produces no Revenue Cloud rows"
+fi
+assert_absent "$RUN_SERVOMEX/AttributePicklistValue.csv" "Not Used" \
+    "no deprecated option reaches an active picklist"
+
+echo ""
 echo "========================================="
 echo "Passed: $PASS   Failed: $FAIL"
 echo "========================================="

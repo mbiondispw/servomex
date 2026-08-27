@@ -4,7 +4,7 @@
 # scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
 # generated SFDMU CSVs carry ASCII-normalized operational values.
 
-revision: 3
+revision: 4
 
 approval:
   approved: true
@@ -57,6 +57,28 @@ categories:
     source:
       page: 6
       text: "C7900_MOUNTING_HEADER           MOUNTING BASE CONFIG"
+
+  - id: C7900_PURGE_HEADER
+    label: Analyser Purge
+    description: Purge supply, fittings, and panel supplied with the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 7
+      text: "C7900_PURGE_HEADER              ANALYSER PURGE"
+
+  - id: C7900_INPUT_OUTPUT_HEADER
+    label: Electrical Connections
+    description: Power supply and signal connections provided on the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 8
+      text: "C7900_INPUT_OUTPUT_HEADER       ELECTRICAL CONNECTIONS"
 
 characteristics:
   # --- Source nodes preceding the first section header ---------------------
@@ -1308,6 +1330,332 @@ characteristics:
         source:
           page: 7
           text: "2                           Long"
+
+  - id: C7900B_TPACCESSORIES
+    label: Type
+    disposition: source-control
+    disposition_reason: >-
+      SAP accessories type-table key, paired with the C7900_ACC_DTP Accessories
+      Reference. Its sole permitted value is the SAP material number 07931BA,
+      not a selling choice; the retained C7900B_TPBASE already carries the
+      analyser type.
+    source:
+      page: 7
+      text: "C7900B_TPACCESSORIES            Type"
+
+  # --- ANALYSER PURGE ------------------------------------------------------
+
+  - id: C7900_OPTICAL_PURGING
+    label: Window Purging
+    description: Purge gas supplied to the optical windows.
+    disposition: generated
+    disposition_reason: Retained selling choice for the window purge supply.
+    type: Picklist
+    category: C7900_PURGE_HEADER
+    sequence: 24
+    source:
+      page: 7
+      text: "C7900_OPTICAL_PURGING           Window Purging"
+    values:
+      - code: "0"
+        label: None
+        disposition: generated
+        source:
+          page: 7
+          text: "0                           None"
+      - code: "A"
+        label: Instrument Air
+        disposition: generated
+        source:
+          page: 7
+          text: "A                           Instrument Air"
+      - code: "N"
+        label: Nitrogen
+        disposition: generated
+        source:
+          page: 7
+          text: "N                           Nitrogen"
+
+  - id: C7900_PURGE_GAS_FILTRATION
+    label: Measurement Purging
+    description: Purge gas supplied to the measurement path.
+    disposition: generated
+    disposition_reason: Retained selling choice for the measurement purge supply.
+    type: Picklist
+    category: C7900_PURGE_HEADER
+    sequence: 25
+    source:
+      page: 7
+      text: "C7900_PURGE_GAS_FILTRATION      Measurement Purging"
+    values:
+      - code: "0"
+        label: Blanked
+        disposition: generated
+        source:
+          page: 7
+          text: "0                           Blanked"
+      - code: "A"
+        label: Instrument Air
+        disposition: generated
+        source:
+          page: 7
+          text: "A                           Instrument Air"
+      - code: "N"
+        label: Nitrogen
+        disposition: generated
+        source:
+          page: 7
+          text: "N                           Nitrogen"
+      - code: "S"
+        label: Scrubber
+        disposition: generated
+        source:
+          page: 7
+          text: "S                           Scrubber"
+
+  - id: C7900_INSTRUMENT_PURGING
+    label: Environment Purging
+    description: Purge gas supplied to the analyser enclosure.
+    disposition: generated
+    disposition_reason: Retained selling choice for the enclosure purge supply.
+    type: Picklist
+    category: C7900_PURGE_HEADER
+    sequence: 26
+    source:
+      page: 7
+      text: "C7900_INSTRUMENT_PURGING        Environment Purging"
+    values:
+      - code: "0"
+        label: None
+        disposition: generated
+        source:
+          page: 7
+          text: "0                           None"
+      - code: "A"
+        label: Instrument Air
+        disposition: generated
+        source:
+          page: 7
+          text: "A                           Instrument Air"
+      - code: "N"
+        label: Nitrogen
+        disposition: generated
+        source:
+          page: 7
+          text: "N                           Nitrogen"
+
+  - id: C7900_PURGE_FITTING_TYPE
+    label: Purge Adaptors
+    description: Thread form of the purge supply adaptors.
+    disposition: generated
+    disposition_reason: Retained selling choice for the purge adaptor thread form.
+    type: Picklist
+    category: C7900_PURGE_HEADER
+    sequence: 27
+    source:
+      page: 7
+      text: "C7900_PURGE_FITTING_TYPE        Purge Adaptors"
+    values:
+      - code: "0"
+        label: '1/8" NPTF'
+        disposition: generated
+        source:
+          page: 7
+          text: '0                           1/8" NPTF'
+      - code: "M"
+        label: Metric (6mm)
+        disposition: generated
+        source:
+          page: 7
+          text: "M                           Metric (6mm)"
+      - code: "I"
+        label: 'Imperial (1/4")'
+        disposition: generated
+        source:
+          page: 7
+          text: 'I                           Imperial (1/4")'
+
+  - id: C7900_TPA210
+    label: Fitting Type TP
+    disposition: source-control
+    disposition_reason: >-
+      SAP technical fitting-type reference. It carries no permitted values, and
+      the customer-facing thread form is already offered by the retained
+      C7900_PURGE_FITTING_TYPE Purge Adaptors.
+    source:
+      page: 7
+      text: "C7900_TPA210                    Fitting Type TP"
+
+  - id: C7900_PURGE_PANEL
+    label: Purge Panel
+    description: Purge control panel supplied with the analyser.
+    disposition: generated
+    disposition_reason: Retained selling choice for the purge panel.
+    type: Picklist
+    category: C7900_PURGE_HEADER
+    sequence: 28
+    source:
+      page: 8
+      text: "C7900_PURGE_PANEL               Purge Panel"
+    values:
+      - code: "C"
+        label: None
+        disposition: generated
+        source:
+          page: 8
+          text: "C                           None"
+      - code: "L"
+        label: Servomex Local Office Supply
+        disposition: generated
+        source:
+          page: 8
+          text: "L                           Servomex Local Office Supply"
+      - code: "1"
+        label: Window Purge Only
+        disposition: generated
+        source:
+          page: 8
+          text: "1                           Window Purge Only"
+      - code: "2"
+        label: Window Purge + Cal Cell
+        disposition: generated
+        source:
+          page: 8
+          text: "2                           Window Purge + Cal Cell"
+      - code: "3"
+        label: Window and Case Purge
+        disposition: generated
+        source:
+          page: 8
+          text: "3                           Window and Case Purge"
+      - code: "4"
+        label: Window/Case Purge + Cal Cell
+        disposition: generated
+        source:
+          page: 8
+          text: "4                           Window/Case Purge + Cal Cell"
+      # Source abbreviations are preserved: SAP truncates these two labels to
+      # fit the option column, and their expansion is not confirmed.
+      - code: "5"
+        label: Windws/Case/Laser/Det Purge
+        disposition: generated
+        source:
+          page: 8
+          text: "5                           Windws/Case/Laser/Det Purge"
+      - code: "6"
+        label: Wndws/C/Lsr/Det Purge + C Cell
+        disposition: generated
+        source:
+          page: 8
+          text: "6                           Wndws/C/Lsr/Det Purge + C Cell"
+      - code: "7"
+        label: Full Analyser Purge
+        disposition: generated
+        source:
+          page: 8
+          text: "7                           Full Analyser Purge"
+
+  # --- ELECTRICAL CONNECTIONS ----------------------------------------------
+
+  - id: C7900B_SUPPLY_VOLTAGE
+    label: Supply Voltage
+    description: Electrical supply the analyser is built for.
+    disposition: generated
+    disposition_reason: Retained selling choice for the electrical supply.
+    type: Picklist
+    category: C7900_INPUT_OUTPUT_HEADER
+    sequence: 29
+    source:
+      page: 8
+      text: "C7900B_SUPPLY_VOLTAGE           Supply Voltage"
+    values:
+      - code: "D"
+        label: 24V dc
+        disposition: generated
+        source:
+          page: 8
+          text: "D                           24V dc"
+      - code: "M"
+        label: 100-240 V / 50-60 Hz (Ext)
+        disposition: generated
+        source:
+          page: 8
+          text: "M                           100-240 V / 50-60 Hz (Ext)"
+
+  - id: C7900B_4_20MA_OP
+    label: 4-20mA Outputs
+    description: Number of 4-20mA analogue outputs fitted.
+    disposition: generated
+    disposition_reason: Retained selling choice for the analogue output count.
+    type: Picklist
+    category: C7900_INPUT_OUTPUT_HEADER
+    sequence: 30
+    source:
+      page: 8
+      text: "C7900B_4_20MA_OP                4-20mA Outputs"
+    values:
+      - code: "1"
+        label: One
+        disposition: generated
+        source:
+          page: 8
+          text: "1                           One"
+      - code: "2"
+        label: Two
+        disposition: generated
+        source:
+          page: 8
+          text: "2                           Two"
+
+  - id: C7900B_4_20MA_IP
+    label: 4-20mA Inputs
+    description: Number of 4-20mA analogue inputs fitted.
+    disposition: generated
+    disposition_reason: Retained selling choice for the analogue input count.
+    type: Picklist
+    category: C7900_INPUT_OUTPUT_HEADER
+    sequence: 31
+    source:
+      page: 8
+      text: "C7900B_4_20MA_IP                4-20mA Inputs"
+    values:
+      - code: "0"
+        label: None
+        disposition: generated
+        source:
+          page: 8
+          text: "0                           None"
+      - code: "2"
+        label: Two
+        disposition: generated
+        source:
+          page: 8
+          text: "2                           Two"
+
+  - id: C7900B_ALARM_OP
+    label: Alarm Outputs
+    description: Number of alarm relay outputs fitted.
+    disposition: generated
+    disposition_reason: Retained selling choice for the alarm output count.
+    type: Picklist
+    category: C7900_INPUT_OUTPUT_HEADER
+    sequence: 32
+    source:
+      page: 8
+      text: "C7900B_ALARM_OP                 Alarm Outputs"
+    values:
+      - code: "1"
+        label: One
+        disposition: generated
+        source:
+          page: 8
+          text: "1                           One"
+      - code: "3"
+        label: Three
+        disposition: generated
+        source:
+          page: 8
+          text: "3                           Three"
 
 unresolved:
   - id: CLASS_7930B-dependencies

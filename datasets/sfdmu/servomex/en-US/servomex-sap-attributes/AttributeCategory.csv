@@ -1,2 +1,4 @@
 Code,Name,Description
+SAP-CLASS_7930B-C7900_MOUNTING_HEADER,Mounting Base Config,Mounting hardware supplied with the analyser.
+SAP-CLASS_7930B-C7900_OPTICAL_HEADER,Installation Details,Optical installation details of the analyser.
 SAP-CLASS_7930B-C7900_PART_HEADER,Analyser Base Config,Base configuration characteristics of the analyser.

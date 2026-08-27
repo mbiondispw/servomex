@@ -343,6 +343,79 @@ assert_contains "$REPO_ROOT/datasets/sap/servomex-07930b1/manifest.yaml" \
     "exact source text stays traceable in the manifest"
 
 echo ""
+echo "Test 17: the approved SERVOTOUGH manifest converts Installation Details and Mounting Base Config"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_OPTICAL_HEADER,Installation Details" \
+    "the optical section header becomes the Installation Details category"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_MOUNTING_HEADER,Mounting Base Config" \
+    "the mounting section header becomes the Mounting Base Config category"
+
+assert_chain() {
+    local characteristic="$1" category="$2"
+    local code="SAP-CLASS_7930B-$characteristic"
+    local category_code="SAP-CLASS_7930B-$category"
+    assert_contains "$RUN_SERVOMEX/AttributePicklist.csv" "$code-PL," \
+        "$characteristic has a permitted-value set"
+    assert_contains "$RUN_SERVOMEX/AttributeDefinition.csv" "$code-PL,$characteristic," \
+        "$characteristic has an attribute definition keyed to its SAP id"
+    assert_contains "$RUN_SERVOMEX/AttributeCategoryAttribute.csv" "$category_code;$code" \
+        "$characteristic sits in $category"
+    assert_contains "$RUN_SERVOMEX/ProductClassificationAttr.csv" \
+        "$code,SAP-CLASS_7930B,$category_code,$code," \
+        "$characteristic is assigned at classification level"
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$code-07930B1,07930B1,$code," \
+        "$characteristic is bound to product 07930B1"
+}
+
+for characteristic in C7900_ORINGS C7900B_BEAM_DIVERGENCE C7900B_INTGRATED_SPAN_CHECK; do
+    assert_chain "$characteristic" C7900_OPTICAL_HEADER
+done
+for characteristic in C7900B_MTG_BASE C7900B_TPM110 C7900B_TPM120 C7900B_TPM130 \
+    C7900B_TPM140 C7900B_TPM150 C7900B_TPM160 C7900B_TPM170 C7900B_TPM180 C7900B_TPM190; do
+    assert_chain "$characteristic" C7900_MOUNTING_HEADER
+done
+
+echo ""
+echo "Test 18: mounting option sets keep their source codes and fixed-value policy"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_BEAM_DIVERGENCE-0,Collimated Beam,Collimated Beam,Collimated Beam,0," \
+    "Beam Divergence keeps its collimated option"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    'SAP-CLASS_7930B-C7900B_TPM130-M,"2"" ANSI (150)"' \
+    "Tx Flange Size keeps its imperial flange sizes"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_TPM170-5,DN50 316SS Standard Bore," \
+    "Insertion Tube keeps its bore options"
+assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+    "Instrument Seal Type,Silicone Rubber,false,false,true,true," \
+    "the sole instrument seal type is defaulted, read-only, and required"
+assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+    "Type,SP Mini,false,false,true,true," \
+    "the sole mounting base type is defaulted, read-only, and required"
+for editable in "Tx Mounting Type" "Rx Flange Size" "Thermal Break" "Inline Span Cell"; do
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$editable,,false,false,false,false," \
+        "$editable stays optional and editable with no invented default"
+done
+
+echo ""
+echo "Test 19: untyped installation measurements are deferred, not generated"
+for deferred in C7900_TU_FLG_OPT_PATH_LENGTH C7900_OPTICAL_PATH_LENGTH \
+    C7900_RU_FLG_OPT_PATH_LENGTH C7900_PATH_LENGTH_TOTAL; do
+    assert_contains "$RUN_SERVOMEX/conversion-report.md" "\`$deferred\` |" \
+        "report accounts for $deferred"
+    if grep -rqF -- "$deferred" "$RUN_SERVOMEX"/*.csv; then
+        fail "$deferred produces no Revenue Cloud rows"
+    else
+        pass "$deferred produces no Revenue Cloud rows"
+    fi
+done
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "WARNING: C7900-optical-path-lengths" \
+    "the deferred optical path measurements are reported as unresolved"
+
+echo ""
 echo "========================================="
 echo "Passed: $PASS   Failed: $FAIL"
 echo "========================================="

@@ -1,0 +1,78 @@
+# Positive fixture: approved manifest whose deferred and source-control nodes
+# must be accounted for in the report without reaching Revenue Cloud.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: fixture.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+  product_classification_name: NGL Lase 3 (B1)
+
+plan:
+  path: build/never-written
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"
+
+  - id: CAT_DEFERRED_HEADER
+    label: Process Engineering
+    disposition: deferred
+    disposition_reason: Section modeling unresolved.
+    source:
+      page: 2
+      text: "CAT_DEFERRED_HEADER             PROCESS ENGINEERING"
+
+characteristics:
+  - id: CHAR_TYPE
+    label: Type
+    disposition: generated
+    type: Picklist
+    category: CAT_HEADER
+    sequence: 1
+    source:
+      page: 1
+      text: "CHAR_TYPE                       Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"
+
+  - id: CHAR_DEFERRED_RANGE
+    label: Measurement Range
+    disposition: deferred
+    disposition_reason: Revenue Cloud data type unresolved in the source.
+    source:
+      page: 2
+      text: "CHAR_DEFERRED_RANGE             Measurement Range"
+
+  - id: CHAR_SOURCE_CONTROL_DTP
+    label: Analyser Reference
+    disposition: source-control
+    disposition_reason: SAP dependency-table reference.
+    source:
+      page: 2
+      text: "CHAR_SOURCE_CONTROL_DTP         Analyser Reference"
+
+unresolved:
+  - id: CLASS_7930B-dependencies
+    reason: >-
+      SAP dependency and variant-condition rules are referenced but absent from
+      the source document.

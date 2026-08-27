@@ -1,5 +1,5 @@
-# Negative fixture: a characteristic declares both a shared picklist and its own
-# inline permitted values, leaving two competing option sets.
+# Negative fixture: a characteristic points at a shared picklist that was deferred,
+# so the attribute would load with no options.
 
 revision: test-1
 
@@ -23,7 +23,8 @@ plan:
 picklists:
   - id: SHARED_UNITS
     label: Shared Units
-    disposition: generated
+    disposition: deferred
+    disposition_reason: Unit set held back for review.
     source:
       page: 1
       text: "SHARED_UNITS                    Shared Units"
@@ -53,10 +54,3 @@ characteristics:
     source:
       page: 1
       text: "CHAR_UNITS                      Units"
-    values:
-      - code: PPMV
-        label: ppmv
-        disposition: generated
-        source:
-          page: 1
-          text: "PPMV                        ppmv"

@@ -1,5 +1,5 @@
-# Negative fixture: a characteristic declares both a shared picklist and its own
-# inline permitted values, leaving two competing option sets.
+# Negative fixture: every value of a shared picklist was excluded, leaving the
+# characteristics that reference it with no options.
 
 revision: test-1
 
@@ -30,7 +30,8 @@ picklists:
     values:
       - code: PCT
         label: "% vol"
-        disposition: generated
+        disposition: excluded
+        disposition_reason: Placeholder option.
         source:
           page: 1
           text: "PCT                         % vol"
@@ -53,10 +54,3 @@ characteristics:
     source:
       page: 1
       text: "CHAR_UNITS                      Units"
-    values:
-      - code: PPMV
-        label: ppmv
-        disposition: generated
-        source:
-          page: 1
-          text: "PPMV                        ppmv"

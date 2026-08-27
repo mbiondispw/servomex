@@ -1,5 +1,5 @@
-# Negative fixture: a characteristic declares both a shared picklist and its own
-# inline permitted values, leaving two competing option sets.
+# Negative fixture: a free-text characteristic points at a shared picklist, so its
+# options would never reach the configurator.
 
 revision: test-1
 
@@ -47,16 +47,25 @@ characteristics:
   - id: CHAR_UNITS
     label: Units
     disposition: generated
-    type: Picklist
+    type: Text
     picklist: SHARED_UNITS
     category: CAT_HEADER
     source:
       page: 1
       text: "CHAR_UNITS                      Units"
+
+  - id: CHAR_TYPE
+    label: Type
+    disposition: generated
+    type: Picklist
+    category: CAT_HEADER
+    source:
+      page: 1
+      text: "CHAR_TYPE                       Type"
     values:
-      - code: PPMV
-        label: ppmv
+      - code: BASE
+        label: Laser 3 Plus
         disposition: generated
         source:
           page: 1
-          text: "PPMV                        ppmv"
+          text: "BASE                        Laser 3 Plus"

@@ -191,6 +191,15 @@ run_rejection unknown-shared-picklist.yaml "unknown picklist 'MISSING_UNITS'" \
     "a characteristic pointing at a shared picklist that does not exist"
 run_rejection shared-picklist-and-values.yaml "may not also declare values" \
     "a characteristic declaring both a shared picklist and inline values"
+run_rejection shared-picklist-on-non-picklist.yaml \
+    "only picklist characteristics may reference a shared picklist" \
+    "a free-text characteristic pointing at a shared picklist"
+run_rejection shared-picklist-without-values.yaml "shared picklists need retained values" \
+    "a shared picklist with every value excluded"
+run_rejection shared-picklist-not-generated.yaml "picklist 'SHARED_UNITS' is not generated" \
+    "a characteristic pointing at a deferred shared picklist"
+run_rejection unused-shared-picklist.yaml "no attribute definition references" \
+    "a shared picklist no characteristic references"
 
 echo ""
 echo "Test 10: approved deferred and source-control nodes generate no Revenue Cloud rows"
@@ -669,15 +678,18 @@ done
 echo ""
 echo "Test 31: untyped process application inputs stay deferred and separated in the report"
 report_section() {
-    awk -v heading="$1" '$0 == heading {inside = 1; next} /^## / {inside = 0} inside' \
-        "$RUN_SERVOMEX/conversion-report.md"
+    awk -v heading="$1" '
+        $0 == heading { depth = index($0 " ", " ") - 1; inside = 1; next }
+        inside && /^#/ && index($0 " ", " ") - 1 <= depth { inside = 0 }
+        inside
+    ' "$RUN_SERVOMEX/conversion-report.md"
 }
 
 DEFERRED_SECTION="$WORK_DIR/deferred-section.md"
 report_section "## Deferred Source Nodes" >"$DEFERRED_SECTION"
 COMPOSITION_SECTION="$WORK_DIR/composition-section.md"
-awk '/^### Sample Gas Composition/ {inside = 1; next} /^#{2,3} / {inside = 0} inside' \
-    "$RUN_SERVOMEX/conversion-report.md" >"$COMPOSITION_SECTION"
+report_section "### Sample Gas Composition (\`C7900_BACKGROUND_GAS_HEADER\`)" \
+    >"$COMPOSITION_SECTION"
 
 for deferred in C7900_PROCESS_HEADER C7900_PROCESS_TEMP_MAX C7900_PROCESS_TEMP_TYP \
     C7900_PROCESS_TEMP_MIN C7900_PROCESS_PRESSURE_MAX C7900_PROCESS_PRESSURE_TYP \

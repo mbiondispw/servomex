@@ -1,5 +1,5 @@
-# Negative fixture: a characteristic declares both a shared picklist and its own
-# inline permitted values, leaving two competing option sets.
+# Negative fixture: a shared picklist no characteristic references, which would load
+# an orphan option set into the org.
 
 revision: test-1
 
@@ -44,19 +44,18 @@ categories:
       text: "CAT_HEADER                      BASE CONFIG"
 
 characteristics:
-  - id: CHAR_UNITS
-    label: Units
+  - id: CHAR_TYPE
+    label: Type
     disposition: generated
     type: Picklist
-    picklist: SHARED_UNITS
     category: CAT_HEADER
     source:
       page: 1
-      text: "CHAR_UNITS                      Units"
+      text: "CHAR_TYPE                       Type"
     values:
-      - code: PPMV
-        label: ppmv
+      - code: BASE
+        label: Laser 3 Plus
         disposition: generated
         source:
           page: 1
-          text: "PPMV                        ppmv"
+          text: "BASE                        Laser 3 Plus"

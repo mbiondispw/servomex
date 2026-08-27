@@ -132,6 +132,8 @@ The generator refuses to emit a plan when:
 | A non-`Picklist` characteristic declares values | Set `type: Picklist`, or drop the values |
 | A characteristic references an unknown or non-generated shared picklist | Declare the picklist under `picklists:` |
 | A characteristic declares both `picklist:` and inline `values:` | Keep one option set |
+| A non-`Picklist` characteristic references a shared picklist | Set `type: Picklist`, or drop `picklist:` |
+| A shared picklist has no retained values, or no characteristic references it | Retain a value and point a characteristic at it, or stop generating it |
 | Two nodes collapse onto one generated code | Disambiguate the source ids or value codes |
 | A minted identity is still a bare SAP code such as `A` or `1` | Give the source node a longer, source-specific id |
 | The record chain has a broken link, or a single-value attribute is not required, read-only, and defaulted | Report it — the generator should never produce this |
@@ -173,7 +175,9 @@ plan:
 picklists:                     # optional: option sets shared by several characteristics
   - id: <shared picklist id>
     label: <display name>
+    description: <what the set means>
     disposition: generated
+    disposition_reason: <which characteristics repeat this set>
     source: { page: <n>, text: "<exact source line>" }
     values:
       - code: <raw SAP option code>

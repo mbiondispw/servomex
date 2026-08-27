@@ -554,6 +554,15 @@ def check_plan_integrity(tables):
                 f"AttributeDefinition '{row['Code']}': picklist attribute has no picklist"
             )
 
+    referenced = {row["Picklist.Code"] for row in tables["AttributeDefinition"]}
+    for row in tables["AttributePicklist"]:
+        if row["Code"] not in referenced:
+            raise ManifestError(
+                f"AttributePicklist '{row['Code']}': no attribute definition references "
+                "this picklist. Point a generated characteristic at it, or stop "
+                "generating it."
+            )
+
     for row in tables["AttributeCategoryAttribute"]:
         identity = "$$AttributeCategory.Code$AttributeDefinition.Code"
         require_parent(
@@ -816,7 +825,8 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         "",
         "## Generated Attributes by Category",
         "",
-        "Retained characteristics that reach the configurator, in source order.",
+        "Retained characteristics that reach the configurator, in source position "
+        "within each category.",
     ]
     for category in sorted(
         (node for node in categories.values() if node["disposition"] == "generated"),
@@ -885,7 +895,8 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         "",
         "## Source Node Dispositions",
         "",
-        "Every node extracted from the source document appears exactly once.",
+        "Every node extracted from the source document appears exactly once, "
+        "alongside any shared permitted-value set curated from them.",
         "",
         "| Source ID | Source Label | Kind | Disposition | Reason |",
         "|-----------|--------------|------|-------------|--------|",

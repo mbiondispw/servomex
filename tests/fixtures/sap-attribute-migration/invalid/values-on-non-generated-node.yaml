@@ -1,0 +1,61 @@
+# Negative fixture: permitted values attached to a node the reviewer held back,
+# which would silently drop them from the report's excluded-value accounting.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: fixture.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+
+plan:
+  path: build/never-written
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"
+
+characteristics:
+  - id: CHAR_TYPE
+    label: Type
+    disposition: generated
+    type: Picklist
+    category: CAT_HEADER
+    source:
+      page: 1
+      text: "CHAR_TYPE                       Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"
+
+  - id: CHAR_DEFERRED_RANGE
+    label: Measurement Range
+    disposition: deferred
+    disposition_reason: Revenue Cloud data type unresolved in the source.
+    source:
+      page: 2
+      text: "CHAR_DEFERRED_RANGE             Measurement Range"
+    values:
+      - code: A
+        label: 0-10 ppm
+        disposition: generated
+        source:
+          page: 2
+          text: "A                           0-10 ppm"

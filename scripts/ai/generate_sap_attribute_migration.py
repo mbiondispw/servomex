@@ -173,12 +173,23 @@ def validate(manifest):
         raise ManifestError("plan: missing plan block")
     require(plan, "path", "plan")
 
+    # A source node may hold exactly one disposition, so ids are unique across kinds.
+    dispositioned = {}
+
+    def claim(node, kind, context):
+        previous = dispositioned.get(node["id"])
+        if previous:
+            raise ManifestError(
+                f"{context}: duplicate source node id '{node['id']}' "
+                f"(already dispositioned as a {previous})"
+            )
+        dispositioned[node["id"]] = kind
+
     picklists = {}
     for index, node in enumerate(manifest.get("picklists") or []):
         context = f"picklists[{index}] ({node.get('id', '?')})"
         disposition = validate_node(node, context)
-        if node["id"] in picklists:
-            raise ManifestError(f"{context}: duplicate picklist id '{node['id']}'")
+        claim(node, "picklist", context)
         picklists[node["id"]] = node
         validate_values(node, context)
         if disposition == "generated" and not [
@@ -190,18 +201,16 @@ def validate(manifest):
 
     categories = {}
     for index, node in enumerate(manifest.get("categories") or []):
-        context = f"categories[{index}]"
+        context = f"categories[{index}] ({node.get('id', '?')})"
         validate_node(node, context)
-        if node["id"] in categories:
-            raise ManifestError(f"{context}: duplicate category id '{node['id']}'")
+        claim(node, "category", context)
         categories[node["id"]] = node
 
     characteristics = {}
     for index, node in enumerate(manifest.get("characteristics") or []):
         context = f"characteristics[{index}] ({node.get('id', '?')})"
         disposition = validate_node(node, context)
-        if node["id"] in characteristics:
-            raise ManifestError(f"{context}: duplicate characteristic id '{node['id']}'")
+        claim(node, "characteristic", context)
         characteristics[node["id"]] = node
 
         if disposition == "superseded":
@@ -798,6 +807,9 @@ def render_csv(object_name, rows):
 
 def render_report(manifest, picklists, categories, characteristics, tables, warnings):
     source = manifest["source"]
+    nodes = [("picklist", node) for node in picklists.values()]
+    nodes += [("category", node) for node in categories.values()]
+    nodes += [("characteristic", node) for node in characteristics.values()]
     lines = [
         "# SAP Product Attribute Conversion Report",
         "",
@@ -820,6 +832,21 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
     ]
     for object_name in OBJECT_ORDER:
         lines.append(f"| {object_name} | {len(tables[object_name])} |")
+
+    lines += [
+        "",
+        "## Disposition Summary",
+        "",
+        "Every curated source node counted once, by the disposition its reviewer approved.",
+        "",
+        "| Disposition | Nodes | Generates records |",
+        "|-------------|-------|-------------------|",
+    ]
+    for disposition in sorted(DISPOSITIONS):
+        count = sum(1 for _, node in nodes if node["disposition"] == disposition)
+        generates = "yes" if disposition == "generated" else "no"
+        lines.append(f"| `{disposition}` | {count} | {generates} |")
+    lines.append(f"| **Total** | {len(nodes)} | |")
 
     lines += [
         "",
@@ -901,9 +928,6 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         "| Source ID | Source Label | Kind | Disposition | Reason |",
         "|-----------|--------------|------|-------------|--------|",
     ]
-    nodes = [("picklist", node) for node in picklists.values()]
-    nodes += [("category", node) for node in categories.values()]
-    nodes += [("characteristic", node) for node in characteristics.values()]
     for kind, node in sorted(nodes, key=lambda item: item[1]["id"]):
         reason = node.get("disposition_reason", "")
         if node["disposition"] == "superseded":
@@ -947,7 +971,7 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
     return "\n".join(lines)
 
 
-def render_plan_readme(manifest, tables):
+def render_plan_readme(manifest, tables, warnings):
     source = manifest["source"]
     sku = manifest["target"]["product_sku"]
     plan_path = manifest["plan"]["path"].rstrip("/")
@@ -973,6 +997,9 @@ def render_plan_readme(manifest, tables):
         "```",
         "",
         "## Objects",
+        "",
+        "SFDMU loads the objects in this order, parent before child, so every lookup",
+        "resolves against a record the previous step already wrote.",
         "",
         "| # | Object | Operation | External ID | Records |",
         "|---|--------|-----------|-------------|---------|",
@@ -1012,6 +1039,23 @@ def render_plan_readme(manifest, tables):
         f"python scripts/validate_sfdmu_v5_datasets.py --dataset {plan_path}",
         "```",
         "",
+        "## Warnings",
+        "",
+    ]
+    if warnings:
+        lines.append(
+            "The source document references logic it does not contain. No Revenue Cloud "
+            "constraints were generated, so loading this plan does **not** make every "
+            "generated option combination valid."
+        )
+        lines.append("")
+        for warning in warnings:
+            lines.append(f"- {warning}")
+    else:
+        lines.append("None recorded.")
+
+    lines += [
+        "",
         "See `conversion-report.md` for source node dispositions and unresolved source logic.",
         "",
     ]
@@ -1040,8 +1084,8 @@ def main(argv=None):
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
 
-    manifest = load_manifest(args.manifest)
     try:
+        manifest = load_manifest(args.manifest)
         picklists, categories, characteristics = validate(manifest)
         tables, warnings = build_records(manifest, picklists, categories, characteristics)
     except ManifestError as exc:
@@ -1061,7 +1105,7 @@ def main(argv=None):
             output_dir / f"{object_name}.csv", render_csv(object_name, tables[object_name])
         )
 
-    write_text(output_dir / "README.md", render_plan_readme(manifest, tables))
+    write_text(output_dir / "README.md", render_plan_readme(manifest, tables, warnings))
 
     report_path = args.report or (output_dir / "conversion-report.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)

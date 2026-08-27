@@ -1,0 +1,52 @@
+# Negative fixture: a permitted value dispositioned with a word that only
+# applies to source nodes, not to options.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: fixture.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+
+plan:
+  path: build/never-written
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"
+
+characteristics:
+  - id: CHAR_TYPE
+    label: Type
+    disposition: generated
+    type: Picklist
+    category: CAT_HEADER
+    source:
+      page: 1
+      text: "CHAR_TYPE                       Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"
+      - code: 07932B1
+        label: Laser 3
+        disposition: deferred
+        source:
+          page: 1
+          text: "07932B1                     Laser 3"

@@ -4,7 +4,7 @@
 # scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
 # generated SFDMU CSVs carry ASCII-normalized operational values.
 
-revision: 6
+revision: 7
 
 approval:
   approved: true
@@ -2853,6 +2853,57 @@ characteristics:
     source:
       page: 9
       text: "C7900_TPA220A                   Cable Qty TP_A"
+
+  - id: VARCOND
+    label: Variant condition
+    disposition: source-control
+    disposition_reason: >-
+      SAP variant-condition control. It carries SAP variant pricing, not a
+      selling choice, and the source does not contain the condition rules.
+    source:
+      page: 9
+      text: "VARCOND                         Variant condition"
+
+  - id: VARCONDMM
+    label: Variant condition
+    disposition: source-control
+    disposition_reason: >-
+      SAP materials-management variant-condition control. It carries SAP variant
+      pricing, not a selling choice, and the source does not contain the
+      condition rules.
+    source:
+      page: 9
+      text: "VARCONDMM                       Variant condition"
+
+  - id: BOM
+    label: BOM
+    disposition: source-control
+    disposition_reason: >-
+      SAP bill-of-material object attached to the material. It describes
+      manufacturing structure, not a configurator choice.
+    source:
+      page: 9
+      text: "BOM                                                          BOM"
+
+  - id: ROUT
+    label: Task Lists
+    disposition: source-control
+    disposition_reason: >-
+      SAP task-list (routing) object attached to the material. It describes
+      manufacturing operations, not a configurator choice.
+    source:
+      page: 9
+      text: "Task Lists                                                   ROUT"
+
+  - id: Confign Profiles
+    label: Confign Profiles
+    disposition: source-control
+    disposition_reason: >-
+      SAP configuration-profile object attached to the material. It governs how
+      SAP itself configures the material and carries no permitted values.
+    source:
+      page: 9
+      text: "Confign Profiles"
 
 unresolved:
   - id: CLASS_7930B-dependencies

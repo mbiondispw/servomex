@@ -1,0 +1,4 @@
+# Negative fixture: a manifest that is not a mapping at all.
+
+- CAT_HEADER
+- CHAR_TYPE

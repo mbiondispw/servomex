@@ -18,6 +18,9 @@ cci task run load_sfdmu_data -o pathtoexportjson datasets/sfdmu/servomex/en-US/s
 
 ## Objects
 
+SFDMU loads the objects in this order, parent before child, so every lookup
+resolves against a record the previous step already wrote.
+
 | # | Object | Operation | External ID | Records |
 |---|--------|-----------|-------------|---------|
 | 1 | AttributePicklist | Upsert | `Code` | 40 |
@@ -53,5 +56,14 @@ direct identity field, so it is the one object matched by traversal.
 ```bash
 python scripts/validate_sfdmu_v5_datasets.py --dataset datasets/sfdmu/servomex/en-US/servomex-sap-attributes
 ```
+
+## Warnings
+
+The source document references logic it does not contain. No Revenue Cloud constraints were generated, so loading this plan does **not** make every generated option combination valid.
+
+- CLASS_7930B-dependencies: The source document flags SAP dependency and variant-condition logic through the Dep. column and icons, but does not contain the rules themselves. No Revenue Cloud constraints were generated, and no generated option combination is proven valid.
+- C7900B_TP01-measurement-1: The source supplies a Measurement 1, Range permitted-value set but no permitted values or data type for Measurement 1 itself, so the primary measured component is deferred and the retained range has no measured component to qualify.
+- C7900-optical-path-lengths: The three optical path segments and their total are quoted as engineering measurements, but the source states no unit, no permitted values, and no data type. They are deferred, so the retained Total Path Length band is the only optical-length choice the configurator offers.
+- C7900-process-application-inputs: Process temperature, process pressure, and dust loading are quoted as application inputs with no unit, permitted values, or scale. They are deferred and generate no Revenue Cloud rows.
 
 See `conversion-report.md` for source node dispositions and unresolved source logic.

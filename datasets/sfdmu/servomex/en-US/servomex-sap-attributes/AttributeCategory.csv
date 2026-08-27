@@ -1,5 +1,6 @@
 Code,Name,Description
 SAP-CLASS_7930B-C7900_ACCESSORIES_HEADER,Accessories,Accessories supplied alongside the analyser.
+SAP-CLASS_7930B-C7900_BACKGROUND_GAS_HEADER,Sample Gas Composition,Composition of the sample gas the analyser must tolerate.
 SAP-CLASS_7930B-C7900_INPUT_OUTPUT_HEADER,Electrical Connections,Power supply and signal connections provided on the analyser.
 SAP-CLASS_7930B-C7900_MANUALS_HEADER,Manuals,Documentation supplied with the analyser.
 SAP-CLASS_7930B-C7900_MOUNTING_HEADER,Mounting Base Config,Mounting hardware supplied with the analyser.

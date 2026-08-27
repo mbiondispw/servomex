@@ -1,4 +1,5 @@
 Code,Name,DataType,Description,Status
+SAP-CLASS_7930B-C7900_BG_COMP_UNITS-PL,Sample Gas Composition Units (C7900_BG_COMP_UNITS),Text,Concentration unit shared by every sample gas component slot.,Active
 SAP-CLASS_7930B-C7900B_4_20MA_IP-PL,4-20mA Inputs (C7900B_4_20MA_IP),Text,Permitted-value set for SAP characteristic C7900B_4_20MA_IP,Active
 SAP-CLASS_7930B-C7900B_4_20MA_OP-PL,4-20mA Outputs (C7900B_4_20MA_OP),Text,Permitted-value set for SAP characteristic C7900B_4_20MA_OP,Active
 SAP-CLASS_7930B-C7900B_ALARM_OP-PL,Alarm Outputs (C7900B_ALARM_OP),Text,Permitted-value set for SAP characteristic C7900B_ALARM_OP,Active

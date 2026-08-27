@@ -1,0 +1,55 @@
+# Negative fixture: a characteristic points at a shared picklist the manifest never declares,
+# so its permitted values would vanish silently.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-27
+
+source:
+  system: SAP
+  document: fixture.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+
+plan:
+  path: build/never-written
+
+picklists:
+  - id: SHARED_UNITS
+    label: Shared Units
+    disposition: generated
+    source:
+      page: 1
+      text: "SHARED_UNITS                    Shared Units"
+    values:
+      - code: PCT
+        label: "% vol"
+        disposition: generated
+        source:
+          page: 1
+          text: "PCT                         % vol"
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"
+
+characteristics:
+  - id: CHAR_UNITS
+    label: Units
+    disposition: generated
+    type: Picklist
+    picklist: MISSING_UNITS
+    category: CAT_HEADER
+    source:
+      page: 1
+      text: "CHAR_UNITS                      Units"

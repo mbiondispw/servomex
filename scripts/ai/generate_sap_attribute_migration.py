@@ -139,8 +139,22 @@ def validate_node(node, context):
     return disposition
 
 
+def validate_values(node, context):
+    for value_index, value in enumerate(node.get("values") or []):
+        value_context = f"{context}.values[{value_index}]"
+        require(value, "code", value_context)
+        require(value, "label", value_context)
+        value_disposition = value.get("disposition", "generated")
+        if value_disposition not in {"generated", "excluded"}:
+            raise ManifestError(
+                f"{value_context}: value disposition must be 'generated' or 'excluded'"
+            )
+        if value_disposition == "excluded" and not value.get("disposition_reason"):
+            raise ManifestError(f"{value_context}: excluded values need a reason")
+
+
 def validate(manifest):
-    """Validate the manifest and return (categories, characteristics) index maps."""
+    """Validate the manifest and return (picklists, categories, characteristics) index maps."""
     validate_approval(manifest)
 
     source = manifest.get("source")
@@ -158,6 +172,21 @@ def validate(manifest):
     if not isinstance(plan, dict):
         raise ManifestError("plan: missing plan block")
     require(plan, "path", "plan")
+
+    picklists = {}
+    for index, node in enumerate(manifest.get("picklists") or []):
+        context = f"picklists[{index}] ({node.get('id', '?')})"
+        disposition = validate_node(node, context)
+        if node["id"] in picklists:
+            raise ManifestError(f"{context}: duplicate picklist id '{node['id']}'")
+        picklists[node["id"]] = node
+        validate_values(node, context)
+        if disposition == "generated" and not [
+            value
+            for value in (node.get("values") or [])
+            if value.get("disposition", "generated") == "generated"
+        ]:
+            raise ManifestError(f"{context}: shared picklists need retained values")
 
     categories = {}
     for index, node in enumerate(manifest.get("categories") or []):
@@ -200,29 +229,36 @@ def validate(manifest):
                 f"{context}: category '{category_id}' is not generated"
             )
 
+        shared = node.get("picklist")
+        if shared:
+            if data_type != "Picklist":
+                raise ManifestError(
+                    f"{context}: only picklist characteristics may reference a shared "
+                    f"picklist. Set type: Picklist, or drop 'picklist'."
+                )
+            if node.get("values"):
+                raise ManifestError(
+                    f"{context}: a characteristic referencing shared picklist '{shared}' "
+                    f"may not also declare values"
+                )
+            if shared not in picklists:
+                raise ManifestError(f"{context}: unknown picklist '{shared}'")
+            if picklists[shared]["disposition"] != "generated":
+                raise ManifestError(f"{context}: picklist '{shared}' is not generated")
+
         values = [
             value
             for value in (node.get("values") or [])
             if value.get("disposition", "generated") == "generated"
         ]
-        if data_type == "Picklist" and not values:
+        if data_type == "Picklist" and not values and not shared:
             raise ManifestError(f"{context}: picklist characteristics need retained values")
         if data_type != "Picklist" and node.get("values"):
             raise ManifestError(
                 f"{context}: only picklist characteristics may declare values. "
                 f"Set type: Picklist, or drop the values from this '{data_type}' characteristic."
             )
-        for value_index, value in enumerate(node.get("values") or []):
-            value_context = f"{context}.values[{value_index}]"
-            require(value, "code", value_context)
-            require(value, "label", value_context)
-            value_disposition = value.get("disposition", "generated")
-            if value_disposition not in {"generated", "excluded"}:
-                raise ManifestError(
-                    f"{value_context}: value disposition must be 'generated' or 'excluded'"
-                )
-            if value_disposition == "excluded" and not value.get("disposition_reason"):
-                raise ManifestError(f"{value_context}: excluded values need a reason")
+        validate_values(node, context)
 
     for node in characteristics.values():
         if node["disposition"] == "superseded":
@@ -232,7 +268,7 @@ def validate(manifest):
                     f"characteristics ({node['id']}): superseded_by '{replacement}' is not a known characteristic"
                 )
 
-    return categories, characteristics
+    return picklists, categories, characteristics
 
 
 # ---------------------------------------------------------------------------
@@ -248,7 +284,7 @@ def retained_values(characteristic):
     ]
 
 
-def build_records(manifest, categories, characteristics):
+def build_records(manifest, picklists, categories, characteristics):
     source = manifest["source"]
     system = source["system"]
     sap_class = source["sap_class"]
@@ -264,6 +300,49 @@ def build_records(manifest, categories, characteristics):
 
     tables = {name: [] for name in OBJECT_ORDER}
     warnings = []
+
+    def emit_picklist(owner_id, label, description, values):
+        """Write one picklist and its permitted values, and return its code."""
+        picklist_code = qualify(prefix, owner_id, "PL")
+        tables["AttributePicklist"].append(
+            {
+                "Code": picklist_code,
+                "Name": f"{label} ({owner_id})",
+                "DataType": "Text",
+                "Description": ascii_normalize(description),
+                "Status": "Active",
+            }
+        )
+        for sequence, value in enumerate(values, start=1):
+            value_label = ascii_normalize(value["label"])
+            tables["AttributePicklistValue"].append(
+                {
+                    "Code": qualify(prefix, owner_id, value["code"]),
+                    "Name": value_label,
+                    "DisplayValue": value_label,
+                    "Value": value_label,
+                    "Abbreviation": str(value["code"]),
+                    "Picklist.Code": picklist_code,
+                    "Sequence": sequence,
+                    "IsDefault": "true" if len(values) == 1 else "false",
+                    "Status": "Active",
+                }
+            )
+        return picklist_code
+
+    shared_picklist_codes = {}
+    for shared in sorted(
+        (node for node in picklists.values() if node["disposition"] == "generated"),
+        key=lambda node: node["id"],
+    ):
+        shared_picklist_codes[shared["id"]] = emit_picklist(
+            shared["id"],
+            ascii_normalize(shared["label"]),
+            shared.get(
+                "description", f"Shared permitted-value set {shared['id']}"
+            ),
+            retained_values(shared),
+        )
 
     classification_code = prefix
     tables["ProductClassification"].append(
@@ -291,39 +370,20 @@ def build_records(manifest, categories, characteristics):
         attribute_code = qualify(prefix, char_id)
         category_code = qualify(prefix, characteristic["category"])
         label = ascii_normalize(characteristic["label"])
-        values = retained_values(characteristic)
+        shared_id = characteristic.get("picklist")
+        values = retained_values(picklists[shared_id] if shared_id else characteristic)
         is_single_value = characteristic["type"] == "Picklist" and len(values) == 1
 
         picklist_code = ""
-        if characteristic["type"] == "Picklist":
-            picklist_code = qualify(prefix, char_id, "PL")
-            tables["AttributePicklist"].append(
-                {
-                    "Code": picklist_code,
-                    "Name": f"{label} ({char_id})",
-                    "DataType": "Text",
-                    "Description": ascii_normalize(
-                        f"Permitted-value set for SAP characteristic {char_id}"
-                    ),
-                    "Status": "Active",
-                }
+        if shared_id:
+            picklist_code = shared_picklist_codes[shared_id]
+        elif characteristic["type"] == "Picklist":
+            picklist_code = emit_picklist(
+                char_id,
+                label,
+                f"Permitted-value set for SAP characteristic {char_id}",
+                values,
             )
-            for sequence, value in enumerate(values, start=1):
-                value_code = qualify(prefix, char_id, value["code"])
-                value_label = ascii_normalize(value["label"])
-                tables["AttributePicklistValue"].append(
-                    {
-                        "Code": value_code,
-                        "Name": value_label,
-                        "DisplayValue": value_label,
-                        "Value": value_label,
-                        "Abbreviation": str(value["code"]),
-                        "Picklist.Code": picklist_code,
-                        "Sequence": sequence,
-                        "IsDefault": "true" if is_single_value else "false",
-                        "Status": "Active",
-                    }
-                )
 
         tables["AttributeDefinition"].append(
             {
@@ -492,6 +552,15 @@ def check_plan_integrity(tables):
         if row["DataType"] == "Picklist" and row["Picklist.Code"] not in picklists:
             raise ManifestError(
                 f"AttributeDefinition '{row['Code']}': picklist attribute has no picklist"
+            )
+
+    referenced = {row["Picklist.Code"] for row in tables["AttributeDefinition"]}
+    for row in tables["AttributePicklist"]:
+        if row["Code"] not in referenced:
+            raise ManifestError(
+                f"AttributePicklist '{row['Code']}': no attribute definition references "
+                "this picklist. Point a generated characteristic at it, or stop "
+                "generating it."
             )
 
     for row in tables["AttributeCategoryAttribute"]:
@@ -727,7 +796,7 @@ def render_csv(object_name, rows):
     return buffer.getvalue()
 
 
-def render_report(manifest, categories, characteristics, tables, warnings):
+def render_report(manifest, picklists, categories, characteristics, tables, warnings):
     source = manifest["source"]
     lines = [
         "# SAP Product Attribute Conversion Report",
@@ -754,14 +823,86 @@ def render_report(manifest, categories, characteristics, tables, warnings):
 
     lines += [
         "",
+        "## Generated Attributes by Category",
+        "",
+        "Retained characteristics that reach the configurator, in source position "
+        "within each category.",
+    ]
+    for category in sorted(
+        (node for node in categories.values() if node["disposition"] == "generated"),
+        key=lambda node: node["id"],
+    ):
+        members = sorted(
+            (
+                node
+                for node in characteristics.values()
+                if node["disposition"] == "generated"
+                and node.get("category") == category["id"]
+            ),
+            key=lambda node: (node.get("sequence") or 0, node["id"]),
+        )
+        lines += [
+            "",
+            f"### {category['label']} (`{category['id']}`)",
+            "",
+            "| Sequence | Source ID | Attribute | Type | Permitted Values |",
+            "|----------|-----------|-----------|------|------------------|",
+        ]
+        for node in members:
+            shared = node.get("picklist")
+            if shared:
+                permitted = f"shared `{shared}`"
+            elif node["type"] == "Picklist":
+                permitted = str(len(retained_values(node)))
+            else:
+                permitted = "free entry"
+            lines.append(
+                f"| {node.get('sequence') or 0} | `{node['id']}` | {node['label']} "
+                f"| {node['type']} | {permitted} |"
+            )
+
+    lines += [
+        "",
+        "## Deferred Source Nodes",
+        "",
+        "Source nodes held back until their Revenue Cloud data type is agreed. None of "
+        "these generate Revenue Cloud rows.",
+        "",
+    ]
+    deferred_nodes = sorted(
+        (
+            node
+            for node in list(picklists.values())
+            + list(categories.values())
+            + list(characteristics.values())
+            if node["disposition"] == "deferred"
+        ),
+        key=lambda node: node["id"],
+    )
+    if deferred_nodes:
+        lines += [
+            "| Source ID | Source Label | Reason |",
+            "|-----------|--------------|--------|",
+        ]
+        for node in deferred_nodes:
+            lines.append(
+                f"| `{node['id']}` | {node['label']} | {node.get('disposition_reason', '')} |"
+            )
+    else:
+        lines.append("None.")
+
+    lines += [
+        "",
         "## Source Node Dispositions",
         "",
-        "Every node extracted from the source document appears exactly once.",
+        "Every node extracted from the source document appears exactly once, "
+        "alongside any shared permitted-value set curated from them.",
         "",
         "| Source ID | Source Label | Kind | Disposition | Reason |",
         "|-----------|--------------|------|-------------|--------|",
     ]
-    nodes = [("category", node) for node in categories.values()]
+    nodes = [("picklist", node) for node in picklists.values()]
+    nodes += [("category", node) for node in categories.values()]
     nodes += [("characteristic", node) for node in characteristics.values()]
     for kind, node in sorted(nodes, key=lambda item: item[1]["id"]):
         reason = node.get("disposition_reason", "")
@@ -772,7 +913,7 @@ def render_report(manifest, categories, characteristics, tables, warnings):
         )
 
     excluded_values = []
-    for node in characteristics.values():
+    for node in list(picklists.values()) + list(characteristics.values()):
         for value in node.get("values") or []:
             if value.get("disposition", "generated") == "excluded":
                 excluded_values.append((node["id"], value))
@@ -901,8 +1042,8 @@ def main(argv=None):
 
     manifest = load_manifest(args.manifest)
     try:
-        categories, characteristics = validate(manifest)
-        tables, warnings = build_records(manifest, categories, characteristics)
+        picklists, categories, characteristics = validate(manifest)
+        tables, warnings = build_records(manifest, picklists, categories, characteristics)
     except ManifestError as exc:
         sys.stderr.write(f"error: {args.manifest}: {exc}\n")
         return 2
@@ -925,7 +1066,8 @@ def main(argv=None):
     report_path = args.report or (output_dir / "conversion-report.md")
     report_path.parent.mkdir(parents=True, exist_ok=True)
     write_text(
-        report_path, render_report(manifest, categories, characteristics, tables, warnings)
+        report_path,
+        render_report(manifest, picklists, categories, characteristics, tables, warnings),
     )
 
     total = sum(len(rows) for rows in tables.values())

@@ -20,15 +20,15 @@ cci task run load_sfdmu_data -o pathtoexportjson datasets/sfdmu/servomex/en-US/s
 
 | # | Object | Operation | External ID | Records |
 |---|--------|-----------|-------------|---------|
-| 1 | AttributePicklist | Upsert | `Code` | 39 |
-| 2 | AttributePicklistValue | Upsert | `Code` | 167 |
-| 3 | AttributeDefinition | Upsert | `Code` | 39 |
-| 4 | AttributeCategory | Upsert | `Code` | 7 |
-| 5 | AttributeCategoryAttribute | Upsert | `AttributeCategory.Code;AttributeDefinition.Code` | 39 |
+| 1 | AttributePicklist | Upsert | `Code` | 40 |
+| 2 | AttributePicklistValue | Upsert | `Code` | 170 |
+| 3 | AttributeDefinition | Upsert | `Code` | 89 |
+| 4 | AttributeCategory | Upsert | `Code` | 8 |
+| 5 | AttributeCategoryAttribute | Upsert | `AttributeCategory.Code;AttributeDefinition.Code` | 89 |
 | 6 | ProductClassification | Upsert | `Code` | 1 |
-| 7 | ProductClassificationAttr | Upsert | `Name` | 39 |
+| 7 | ProductClassificationAttr | Upsert | `Name` | 89 |
 | 8 | Product2 | Update | `StockKeepingUnit` | 1 |
-| 9 | ProductAttributeDefinition | Upsert | `Name` | 39 |
+| 9 | ProductAttributeDefinition | Upsert | `Name` | 89 |
 
 ## Identity Strategy
 

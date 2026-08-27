@@ -23,11 +23,18 @@ SAP-CLASS_7930B-C7900B_TPM160-PL,Seal Material (Sample Wetted) (C7900B_TPM160),T
 SAP-CLASS_7930B-C7900B_TPM170-PL,Insertion Tube (C7900B_TPM170),Text,Permitted-value set for SAP characteristic C7900B_TPM170,Active
 SAP-CLASS_7930B-C7900B_TPM180-PL,Thermal Break (C7900B_TPM180),Text,Permitted-value set for SAP characteristic C7900B_TPM180,Active
 SAP-CLASS_7930B-C7900B_TPM190-PL,Inline Span Cell (C7900B_TPM190),Text,Permitted-value set for SAP characteristic C7900B_TPM190,Active
+SAP-CLASS_7930B-C7900_ALIGNMENT_TOOLS-PL,Alignment Tool (C7900_ALIGNMENT_TOOLS),Text,Permitted-value set for SAP characteristic C7900_ALIGNMENT_TOOLS,Active
 SAP-CLASS_7930B-C7900_APPLICATION_DETAIL-PL,Application Detail (C7900_APPLICATION_DETAIL),Text,Permitted-value set for SAP characteristic C7900_APPLICATION_DETAIL,Active
+SAP-CLASS_7930B-C7900_CALIBRATION_CELL-PL,Calibration Cell Kit (C7900_CALIBRATION_CELL),Text,Permitted-value set for SAP characteristic C7900_CALIBRATION_CELL,Active
+SAP-CLASS_7930B-C7900_FUN_SAFETY_MANUAL-PL,Functional Safety (C7900_FUN_SAFETY_MANUAL),Text,Permitted-value set for SAP characteristic C7900_FUN_SAFETY_MANUAL,Active
 SAP-CLASS_7930B-C7900_INSTRUMENT_PURGING-PL,Environment Purging (C7900_INSTRUMENT_PURGING),Text,Permitted-value set for SAP characteristic C7900_INSTRUMENT_PURGING,Active
+SAP-CLASS_7930B-C7900_INTERCONNECT_CABLE-PL,Interconnection cable (C7900_INTERCONNECT_CABLE),Text,Permitted-value set for SAP characteristic C7900_INTERCONNECT_CABLE,Active
+SAP-CLASS_7930B-C7900_INTERCONNECT_CABLE_QTY-PL,Interconnection Cable length (C7900_INTERCONNECT_CABLE_QTY),Text,Permitted-value set for SAP characteristic C7900_INTERCONNECT_CABLE_QTY,Active
 SAP-CLASS_7930B-C7900_OPTICAL_PURGING-PL,Window Purging (C7900_OPTICAL_PURGING),Text,Permitted-value set for SAP characteristic C7900_OPTICAL_PURGING,Active
 SAP-CLASS_7930B-C7900_ORINGS-PL,Instrument Seal Type (C7900_ORINGS),Text,Permitted-value set for SAP characteristic C7900_ORINGS,Active
 SAP-CLASS_7930B-C7900_PURGE_FITTING_TYPE-PL,Purge Adaptors (C7900_PURGE_FITTING_TYPE),Text,Permitted-value set for SAP characteristic C7900_PURGE_FITTING_TYPE,Active
 SAP-CLASS_7930B-C7900_PURGE_GAS_FILTRATION-PL,Measurement Purging (C7900_PURGE_GAS_FILTRATION),Text,Permitted-value set for SAP characteristic C7900_PURGE_GAS_FILTRATION,Active
 SAP-CLASS_7930B-C7900_PURGE_PANEL-PL,Purge Panel (C7900_PURGE_PANEL),Text,Permitted-value set for SAP characteristic C7900_PURGE_PANEL,Active
+SAP-CLASS_7930B-C7900_SERVICE_MANUALS-PL,Service (C7900_SERVICE_MANUALS),Text,Permitted-value set for SAP characteristic C7900_SERVICE_MANUALS,Active
 SAP-CLASS_7930B-C7900_TP05-PL,Measurement 3 (C7900_TP05),Text,Permitted-value set for SAP characteristic C7900_TP05,Active
+SAP-CLASS_7930B-C7900_USER_MANUALS-PL,User / Installation (C7900_USER_MANUALS),Text,Permitted-value set for SAP characteristic C7900_USER_MANUALS,Active

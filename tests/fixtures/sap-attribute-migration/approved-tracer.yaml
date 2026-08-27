@@ -1,0 +1,84 @@
+# Positive fixture: approved minimal SERVOTOUGH conversion (one single-value
+# SAP Characteristic). Kept independent of datasets/sap/ so that curation work
+# on the real manifest does not move the test's expectations.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: 07930B1 VC.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+  product_classification_name: NGL Lase 3 (B1)
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-sap-attributes
+
+categories:
+  - id: C7900_PART_HEADER
+    label: Analyser Base Config
+    description: Base configuration characteristics of the analyser.
+    disposition: generated
+    disposition_reason: Section header characteristic.
+    source:
+      page: 1
+      text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
+
+characteristics:
+  - id: C7900B_TPBASE
+    label: Type
+    description: Analyser base type for the SERVOTOUGH Laser 3 Plus.
+    disposition: generated
+    disposition_reason: Product-specific "B" characteristic.
+    type: Picklist
+    category: C7900_PART_HEADER
+    sequence: 1
+    source:
+      page: 1
+      text: "C7900B_TPBASE                   Type"
+    values:
+      - code: 07931B1
+        label: Laser 3 Plus
+        disposition: generated
+        source:
+          page: 1
+          text: "07931B1                     Laser 3 Plus"
+
+  - id: C7900_TPBASE
+    label: Type
+    disposition: superseded
+    superseded_by: C7900B_TPBASE
+    disposition_reason: Generic variant of the same concept.
+    source:
+      page: 1
+      text: "C7900_TPBASE                    Type"
+
+  - id: CMATERIAL_NUMBER
+    label: Material Number
+    disposition: excluded
+    disposition_reason: Duplicates Product identity.
+    source:
+      page: 1
+      text: "CMATERIAL_NUMBER                Material Number"
+
+  - id: C7900_DTP
+    label: Analyser Reference
+    disposition: source-control
+    disposition_reason: SAP dependency-table reference.
+    source:
+      page: 1
+      text: "C7900_DTP                       Analyser Reference"
+
+unresolved:
+  - id: CLASS_7930B-dependencies
+    reason: >-
+      SAP dependency and variant-condition rules are referenced but absent from
+      the source document.

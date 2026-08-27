@@ -1,0 +1,2 @@
+Code,Name,Label,DeveloperName,DataType,Description,IsActive,IsRequired,Picklist.Code,SourceSystemIdentifier,DefaultHelpText
+SAP-CLASS_7930B-C7900B_TPBASE,Type (C7900B_TPBASE),Type,C7900B_TPBASE,Picklist,Analyser base type for the SERVOTOUGH Laser 3 Plus.,true,true,SAP-CLASS_7930B-C7900B_TPBASE-PL,C7900B_TPBASE,

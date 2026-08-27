@@ -4,7 +4,7 @@
 # scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
 # generated SFDMU CSVs carry ASCII-normalized operational values.
 
-revision: 2
+revision: 3
 
 approval:
   approved: true
@@ -35,6 +35,28 @@ categories:
     source:
       page: 1
       text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
+
+  - id: C7900_OPTICAL_HEADER
+    label: Installation Details
+    description: Optical installation details of the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 5
+      text: "C7900_OPTICAL_HEADER            INSTALLATION DETAILS"
+
+  - id: C7900_MOUNTING_HEADER
+    label: Mounting Base Config
+    description: Mounting hardware supplied with the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 6
+      text: "C7900_MOUNTING_HEADER           MOUNTING BASE CONFIG"
 
 characteristics:
   # --- Source nodes preceding the first section header ---------------------
@@ -750,6 +772,543 @@ characteristics:
           page: 3
           text: "XX                          Null"
 
+  # --- INSTALLATION DETAILS ------------------------------------------------
+
+  - id: C7900_TU_FLG_OPT_PATH_LENGTH
+    label: TU Flange Opt Path Length - L1
+    disposition: deferred
+    disposition_reason: >-
+      Engineering measurement of the transmitter flange optical path. The source
+      lists no permitted values, no unit, and no data type, so its Revenue Cloud
+      type cannot be confirmed.
+    source:
+      page: 5
+      text: "C7900_TU_FLG_OPT_PATH_LENGTH    TU Flange Opt Path Length - L1"
+
+  - id: C7900_OPTICAL_PATH_LENGTH
+    label: Process Opt Path Length - L2
+    disposition: deferred
+    disposition_reason: >-
+      Engineering measurement of the process optical path. The source lists no
+      permitted values, no unit, and no data type, so its Revenue Cloud type
+      cannot be confirmed.
+    source:
+      page: 5
+      text: "C7900_OPTICAL_PATH_LENGTH       Process Opt Path Length - L2"
+
+  - id: C7900_RU_FLG_OPT_PATH_LENGTH
+    label: RU Flange Opt Path Length - L3
+    disposition: deferred
+    disposition_reason: >-
+      Engineering measurement of the receiver flange optical path. The source
+      lists no permitted values, no unit, and no data type, so its Revenue Cloud
+      type cannot be confirmed.
+    source:
+      page: 5
+      text: "C7900_RU_FLG_OPT_PATH_LENGTH    RU Flange Opt Path Length - L3"
+
+  - id: C7900_PATH_LENGTH_TOTAL
+    label: Opt Path Length - TOTAL
+    disposition: deferred
+    disposition_reason: >-
+      Sum of the three deferred optical path segments. The source states no
+      permitted values, no unit, and no calculation, so it is deferred with the
+      segments it totals.
+    source:
+      page: 5
+      text: "C7900_PATH_LENGTH_TOTAL         Opt Path Length - TOTAL"
+
+  - id: C7900_ORINGS
+    label: Instrument Seal Type
+    description: Seal material fitted to the instrument.
+    disposition: generated
+    disposition_reason: >-
+      Retained as a fixed fact. The source permits one value, so the attribute is
+      required, read-only, and defaulted.
+    type: Picklist
+    category: C7900_OPTICAL_HEADER
+    sequence: 11
+    source:
+      page: 5
+      text: "C7900_ORINGS                    Instrument Seal Type"
+    values:
+      - code: "S"
+        label: Silicone Rubber
+        disposition: generated
+        source:
+          page: 5
+          text: "S                           Silicone Rubber"
+
+  - id: C7900B_BEAM_DIVERGENCE
+    label: Beam Divergence
+    description: Divergence of the laser beam across the process path.
+    disposition: generated
+    disposition_reason: Retained selling choice for the supplied beam optics.
+    type: Picklist
+    category: C7900_OPTICAL_HEADER
+    sequence: 12
+    source:
+      page: 6
+      text: "C7900B_BEAM_DIVERGENCE          Beam Divergence"
+    # The numeric options carry no unit in the source, so none is invented.
+    values:
+      - code: "0"
+        label: Collimated Beam
+        disposition: generated
+        source:
+          page: 6
+          text: "0                           Collimated Beam"
+      - code: "1"
+        label: "0.6"
+        disposition: generated
+        source:
+          page: 6
+          text: "1                           0.6"
+      - code: "2"
+        label: "0.8"
+        disposition: generated
+        source:
+          page: 6
+          text: "2                           0.8"
+      - code: "3"
+        label: "0.3"
+        disposition: generated
+        source:
+          page: 6
+          text: "3                           0.3"
+      - code: "4"
+        label: "1.0"
+        disposition: generated
+        source:
+          page: 6
+          text: "4                           1.0"
+
+  - id: C7900B_INTGRATED_SPAN_CHECK
+    label: Internal Gas Cell
+    description: Whether an internal gas cell is fitted for span checking.
+    disposition: generated
+    disposition_reason: Retained selling choice for the internal span-check gas cell.
+    type: Picklist
+    category: C7900_OPTICAL_HEADER
+    sequence: 13
+    source:
+      page: 6
+      text: "C7900B_INTGRATED_SPAN_CHECK     Internal Gas Cell"
+    values:
+      - code: "0"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 6
+          text: "0                           Not Required"
+      - code: "G"
+        label: Gas Cell
+        disposition: generated
+        source:
+          page: 6
+          text: "G                           Gas Cell"
+
+  # --- MOUNTING BASE CONFIG ------------------------------------------------
+
+  - id: C7900B_MTG_BASE
+    label: Type
+    description: Mounting base type supplied with the analyser.
+    disposition: generated
+    disposition_reason: >-
+      Retained as a fixed fact. The source permits one value, so the attribute is
+      required, read-only, and defaulted.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 14
+    source:
+      page: 6
+      text: "C7900B_MTG_BASE                 Type"
+    values:
+      - code: "07931BM"
+        label: SP Mini
+        disposition: generated
+        source:
+          page: 6
+          text: "07931BM                     SP Mini"
+
+  - id: C7900B_TPM110
+    label: Isolation Flange
+    description: Isolation flange pair supplied with the mounting.
+    disposition: generated
+    disposition_reason: Retained selling choice for the isolation flange.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 15
+    source:
+      page: 6
+      text: "C7900B_TPM110                   Isolation Flange"
+    values:
+      - code: "X"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 6
+          text: "X                           Not Required"
+      - code: "B"
+        label: DN50 (Pair)
+        disposition: generated
+        source:
+          page: 6
+          text: "B                           DN50 (Pair)"
+      - code: "M"
+        label: '2" ANSI (Pair)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'M                           2" ANSI (Pair)'
+      - code: "C"
+        label: Customer Supplied
+        disposition: generated
+        source:
+          page: 6
+          text: "C                           Customer Supplied"
+
+  - id: C7900B_TPM120
+    label: Tx Mounting Type
+    description: Mounting arrangement for the transmitter unit.
+    disposition: generated
+    disposition_reason: Retained selling choice for the transmitter mounting.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 16
+    source:
+      page: 6
+      text: "C7900B_TPM120                   Tx Mounting Type"
+    values:
+      - code: "X"
+        label: None
+        disposition: generated
+        source:
+          page: 6
+          text: "X                           None"
+      - code: "A"
+        label: Fixed
+        disposition: generated
+        source:
+          page: 6
+          text: "A                           Fixed"
+      - code: "C"
+        label: Adjustable
+        disposition: generated
+        source:
+          page: 6
+          text: "C                           Adjustable"
+      - code: "D"
+        label: Adjustable (O-Ring)
+        disposition: generated
+        source:
+          page: 6
+          text: "D                           Adjustable (O-Ring)"
+
+  - id: C7900B_TPM130
+    label: Tx Flange Size
+    description: Process flange size at the transmitter unit.
+    disposition: generated
+    disposition_reason: Retained selling choice for the transmitter flange size.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 17
+    source:
+      page: 6
+      text: "C7900B_TPM130                   Tx Flange Size"
+    values:
+      - code: "X"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 6
+          text: "X                           Not Required"
+      - code: "A"
+        label: DN25 (PN10)
+        disposition: generated
+        source:
+          page: 6
+          text: "A                           DN25 (PN10)"
+      - code: "B"
+        label: DN50 (PN10)
+        disposition: generated
+        source:
+          page: 6
+          text: "B                           DN50 (PN10)"
+      - code: "L"
+        label: '1" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'L                           1" ANSI (150)'
+      - code: "M"
+        label: '2" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'M                           2" ANSI (150)'
+      - code: "N"
+        label: '3" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'N                           3" ANSI (150)'
+      - code: "O"
+        label: '4" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'O                           4" ANSI (150)'
+
+  - id: C7900B_TPM140
+    label: Rx Mounting Type
+    description: Mounting arrangement for the receiver unit.
+    disposition: generated
+    disposition_reason: Retained selling choice for the receiver mounting.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 18
+    source:
+      page: 6
+      text: "C7900B_TPM140                   Rx Mounting Type"
+    values:
+      - code: "X"
+        label: None
+        disposition: generated
+        source:
+          page: 6
+          text: "X                           None"
+      - code: "A"
+        label: Fixed
+        disposition: generated
+        source:
+          page: 6
+          text: "A                           Fixed"
+      - code: "C"
+        label: Adjustable
+        disposition: generated
+        source:
+          page: 6
+          text: "C                           Adjustable"
+
+  - id: C7900B_TPM150
+    label: Rx Flange Size
+    description: Process flange size at the receiver unit.
+    disposition: generated
+    disposition_reason: Retained selling choice for the receiver flange size.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 19
+    source:
+      page: 6
+      text: "C7900B_TPM150                   Rx Flange Size"
+    values:
+      - code: "X"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 6
+          text: "X                           Not Required"
+      - code: "A"
+        label: DN25 (PN10)
+        disposition: generated
+        source:
+          page: 6
+          text: "A                           DN25 (PN10)"
+      - code: "B"
+        label: DN50 (PN10)
+        disposition: generated
+        source:
+          page: 6
+          text: "B                           DN50 (PN10)"
+      - code: "L"
+        label: '1" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'L                           1" ANSI (150)'
+      - code: "M"
+        label: '2" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'M                           2" ANSI (150)'
+      - code: "N"
+        label: '3" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'N                           3" ANSI (150)'
+      - code: "O"
+        label: '4" ANSI (150)'
+        disposition: generated
+        source:
+          page: 6
+          text: 'O                           4" ANSI (150)'
+
+  - id: C7900B_TPM160
+    label: Seal Material (Sample Wetted)
+    description: Seal material in contact with the sample gas.
+    disposition: generated
+    disposition_reason: Retained selling choice for the sample-wetted seal material.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 20
+    source:
+      page: 6
+      text: "C7900B_TPM160                   Seal Material (Sample Wetted)"
+    values:
+      - code: "X"
+        label: None
+        disposition: generated
+        source:
+          page: 7
+          text: "X                           None"
+      # "Florocarbon" is an unambiguous source misspelling of the elastomer
+      # family Viton 70 belongs to.
+      - code: "2"
+        label: Fluorocarbon (Viton 70)
+        disposition: generated
+        source:
+          page: 7
+          text: "2                           Florocarbon (Viton 70)"
+      - code: "3"
+        label: Solvent Resist (Chemraz 505)
+        disposition: generated
+        source:
+          page: 7
+          text: "3                           Solvent Resist (Chemraz 505)"
+
+  - id: C7900B_TPM170
+    label: Insertion Tube
+    description: Insertion tube fitted between the flange and the process.
+    disposition: generated
+    disposition_reason: Retained selling choice for the insertion tube.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 21
+    source:
+      page: 7
+      text: "C7900B_TPM170                   Insertion Tube"
+    values:
+      - code: "X"
+        label: None
+        disposition: generated
+        source:
+          page: 7
+          text: "X                           None"
+      - code: "3"
+        label: '2" ANSI 316SS Narrow Bore'
+        disposition: generated
+        source:
+          page: 7
+          text: '3                           2" ANSI 316SS Narrow Bore'
+      - code: "4"
+        label: '2" ANSI 316SS Standard Bore'
+        disposition: generated
+        source:
+          page: 7
+          text: '4                           2" ANSI 316SS Standard Bore'
+      - code: "5"
+        label: DN50 316SS Standard Bore
+        disposition: generated
+        source:
+          page: 7
+          text: "5                           DN50 316SS Standard Bore"
+      # Source abbreviations are preserved: their expansion is not confirmed.
+      - code: "6"
+        label: '2"ANSI Combo I F / 316SS S B'
+        disposition: generated
+        source:
+          page: 7
+          text: '6                           2"ANSI Combo I F / 316SS S B'
+
+  - id: C7900B_TPM180
+    label: Thermal Break
+    description: Thermal break pair fitted between the process and the analyser.
+    disposition: generated
+    disposition_reason: Retained selling choice for the thermal break.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 22
+    source:
+      page: 7
+      text: "C7900B_TPM180                   Thermal Break"
+    values:
+      - code: "X"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 7
+          text: "X                           Not Required"
+      - code: "A"
+        label: DN25 (Pair)
+        disposition: generated
+        source:
+          page: 7
+          text: "A                           DN25 (Pair)"
+      - code: "B"
+        label: DN50 (Pair)
+        disposition: generated
+        source:
+          page: 7
+          text: "B                           DN50 (Pair)"
+      - code: "L"
+        label: '1" ANSI (Pair)'
+        disposition: generated
+        source:
+          page: 7
+          text: 'L                           1" ANSI (Pair)'
+      - code: "M"
+        label: '2" ANSI (Pair)'
+        disposition: generated
+        source:
+          page: 7
+          text: 'M                           2" ANSI (Pair)'
+      - code: "N"
+        label: '3" ANSI (Pair)'
+        disposition: generated
+        source:
+          page: 7
+          text: 'N                           3" ANSI (Pair)'
+      - code: "O"
+        label: '4" ANSI (Pair)'
+        disposition: generated
+        source:
+          page: 7
+          text: 'O                           4" ANSI (Pair)'
+
+  - id: C7900B_TPM190
+    label: Inline Span Cell
+    description: Inline span cell fitted in the optical path.
+    disposition: generated
+    disposition_reason: Retained selling choice for the inline span cell.
+    type: Picklist
+    category: C7900_MOUNTING_HEADER
+    sequence: 23
+    source:
+      page: 7
+      text: "C7900B_TPM190                   Inline Span Cell"
+    values:
+      - code: "X"
+        label: Not Required
+        disposition: generated
+        source:
+          page: 7
+          text: "X                           Not Required"
+      - code: "1"
+        label: Standard
+        disposition: generated
+        source:
+          page: 7
+          text: "1                           Standard"
+      - code: "2"
+        label: Long
+        disposition: generated
+        source:
+          page: 7
+          text: "2                           Long"
+
 unresolved:
   - id: CLASS_7930B-dependencies
     reason: >-
@@ -763,3 +1322,9 @@ unresolved:
       permitted values or data type for Measurement 1 itself, so the primary
       measured component is deferred and the retained range has no measured
       component to qualify.
+  - id: C7900-optical-path-lengths
+    reason: >-
+      The three optical path segments and their total are quoted as engineering
+      measurements, but the source states no unit, no permitted values, and no
+      data type. They are deferred, so the retained Total Path Length band is
+      the only optical-length choice the configurator offers.

@@ -1,7 +1,11 @@
 Code,Name,DataType,Description,Status
+SAP-CLASS_7930B-C7900B_4_20MA_IP-PL,4-20mA Inputs (C7900B_4_20MA_IP),Text,Permitted-value set for SAP characteristic C7900B_4_20MA_IP,Active
+SAP-CLASS_7930B-C7900B_4_20MA_OP-PL,4-20mA Outputs (C7900B_4_20MA_OP),Text,Permitted-value set for SAP characteristic C7900B_4_20MA_OP,Active
+SAP-CLASS_7930B-C7900B_ALARM_OP-PL,Alarm Outputs (C7900B_ALARM_OP),Text,Permitted-value set for SAP characteristic C7900B_ALARM_OP,Active
 SAP-CLASS_7930B-C7900B_BEAM_DIVERGENCE-PL,Beam Divergence (C7900B_BEAM_DIVERGENCE),Text,Permitted-value set for SAP characteristic C7900B_BEAM_DIVERGENCE,Active
 SAP-CLASS_7930B-C7900B_INTGRATED_SPAN_CHECK-PL,Internal Gas Cell (C7900B_INTGRATED_SPAN_CHECK),Text,Permitted-value set for SAP characteristic C7900B_INTGRATED_SPAN_CHECK,Active
 SAP-CLASS_7930B-C7900B_MTG_BASE-PL,Type (C7900B_MTG_BASE),Text,Permitted-value set for SAP characteristic C7900B_MTG_BASE,Active
+SAP-CLASS_7930B-C7900B_SUPPLY_VOLTAGE-PL,Supply Voltage (C7900B_SUPPLY_VOLTAGE),Text,Permitted-value set for SAP characteristic C7900B_SUPPLY_VOLTAGE,Active
 SAP-CLASS_7930B-C7900B_TP02-PL,"Measurement 1, Range (C7900B_TP02)",Text,Permitted-value set for SAP characteristic C7900B_TP02,Active
 SAP-CLASS_7930B-C7900B_TP03-PL,Measurement 2 (C7900B_TP03),Text,Permitted-value set for SAP characteristic C7900B_TP03,Active
 SAP-CLASS_7930B-C7900B_TP04-PL,"Measurement 2, Range (C7900B_TP04)",Text,Permitted-value set for SAP characteristic C7900B_TP04,Active
@@ -20,5 +24,10 @@ SAP-CLASS_7930B-C7900B_TPM170-PL,Insertion Tube (C7900B_TPM170),Text,Permitted-v
 SAP-CLASS_7930B-C7900B_TPM180-PL,Thermal Break (C7900B_TPM180),Text,Permitted-value set for SAP characteristic C7900B_TPM180,Active
 SAP-CLASS_7930B-C7900B_TPM190-PL,Inline Span Cell (C7900B_TPM190),Text,Permitted-value set for SAP characteristic C7900B_TPM190,Active
 SAP-CLASS_7930B-C7900_APPLICATION_DETAIL-PL,Application Detail (C7900_APPLICATION_DETAIL),Text,Permitted-value set for SAP characteristic C7900_APPLICATION_DETAIL,Active
+SAP-CLASS_7930B-C7900_INSTRUMENT_PURGING-PL,Environment Purging (C7900_INSTRUMENT_PURGING),Text,Permitted-value set for SAP characteristic C7900_INSTRUMENT_PURGING,Active
+SAP-CLASS_7930B-C7900_OPTICAL_PURGING-PL,Window Purging (C7900_OPTICAL_PURGING),Text,Permitted-value set for SAP characteristic C7900_OPTICAL_PURGING,Active
 SAP-CLASS_7930B-C7900_ORINGS-PL,Instrument Seal Type (C7900_ORINGS),Text,Permitted-value set for SAP characteristic C7900_ORINGS,Active
+SAP-CLASS_7930B-C7900_PURGE_FITTING_TYPE-PL,Purge Adaptors (C7900_PURGE_FITTING_TYPE),Text,Permitted-value set for SAP characteristic C7900_PURGE_FITTING_TYPE,Active
+SAP-CLASS_7930B-C7900_PURGE_GAS_FILTRATION-PL,Measurement Purging (C7900_PURGE_GAS_FILTRATION),Text,Permitted-value set for SAP characteristic C7900_PURGE_GAS_FILTRATION,Active
+SAP-CLASS_7930B-C7900_PURGE_PANEL-PL,Purge Panel (C7900_PURGE_PANEL),Text,Permitted-value set for SAP characteristic C7900_PURGE_PANEL,Active
 SAP-CLASS_7930B-C7900_TP05-PL,Measurement 3 (C7900_TP05),Text,Permitted-value set for SAP characteristic C7900_TP05,Active

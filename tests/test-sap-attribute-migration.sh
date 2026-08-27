@@ -416,6 +416,59 @@ assert_contains "$RUN_SERVOMEX/conversion-report.md" "WARNING: C7900-optical-pat
     "the deferred optical path measurements are reported as unresolved"
 
 echo ""
+echo "Test 20: the approved SERVOTOUGH manifest converts Analyser Purge and Electrical Connections"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_PURGE_HEADER,Analyser Purge" \
+    "the purge section header becomes the Analyser Purge category"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_INPUT_OUTPUT_HEADER,Electrical Connections" \
+    "the input/output section header becomes the Electrical Connections category"
+
+for characteristic in C7900_OPTICAL_PURGING C7900_PURGE_GAS_FILTRATION \
+    C7900_INSTRUMENT_PURGING C7900_PURGE_FITTING_TYPE C7900_PURGE_PANEL; do
+    assert_chain "$characteristic" C7900_PURGE_HEADER
+done
+for characteristic in C7900B_SUPPLY_VOLTAGE C7900B_4_20MA_OP C7900B_4_20MA_IP C7900B_ALARM_OP; do
+    assert_chain "$characteristic" C7900_INPUT_OUTPUT_HEADER
+done
+
+echo ""
+echo "Test 21: purge and electrical option sets keep their source codes and policy"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_PURGE_GAS_FILTRATION-S,Scrubber,Scrubber,Scrubber,S," \
+    "Measurement Purging keeps its scrubber option with the raw SAP code"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    'SAP-CLASS_7930B-C7900_PURGE_FITTING_TYPE-0,"1/8"" NPTF"' \
+    "Purge Adaptors keeps its imperial thread form"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900_PURGE_PANEL-7,Full Analyser Purge," \
+    "Purge Panel keeps its full nine-option ladder"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_SUPPLY_VOLTAGE-M,100-240 V / 50-60 Hz (Ext)," \
+    "Supply Voltage keeps its mains option"
+assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+    "SAP-CLASS_7930B-C7900B_ALARM_OP-3,Three,Three,Three,3," \
+    "Alarm Outputs keeps both counts"
+for editable in "Window Purging" "Environment Purging" "Purge Panel" \
+    "Supply Voltage" "4-20mA Outputs" "4-20mA Inputs" "Alarm Outputs"; do
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "$editable,,false,false,false,false," \
+        "$editable stays optional and editable with no invented default"
+done
+
+echo ""
+echo "Test 22: SAP fitting and type-table references stay out of the configurator"
+for reference in C7900_TPA210 C7900B_TPACCESSORIES; do
+    assert_contains "$RUN_SERVOMEX/conversion-report.md" "\`$reference\` |" \
+        "report accounts for $reference"
+    if grep -rqF -- "$reference" "$RUN_SERVOMEX"/*.csv; then
+        fail "$reference produces no Revenue Cloud rows"
+    else
+        pass "$reference produces no Revenue Cloud rows"
+    fi
+done
+
+echo ""
 echo "========================================="
 echo "Passed: $PASS   Failed: $FAIL"
 echo "========================================="

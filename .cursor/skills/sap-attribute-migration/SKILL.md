@@ -26,7 +26,8 @@ SAP PDF  ──extract──▶  manifest.yaml  ──human approval──▶  g
    generated artifact. Never hand-edit generated CSVs, `export.json`, the plan
    `README.md`, or `conversion-report.md`.
 2. **Every source node gets a disposition.** `generated`, `excluded`,
-   `deferred`, `superseded`, or `source-control`. Nothing disappears silently.
+   `deferred`, `superseded`, or `source-control`. Nothing disappears silently,
+   and one SAP identifier carries exactly one disposition.
 3. **Generation is gated on human approval.** The generator exits 2 until
    `approval.approved: true` is present with a reviewer and a date.
 4. **Codes are source-qualified.** `SAP-<class>-<characteristic>[-<value>]`.
@@ -125,9 +126,14 @@ The generator refuses to emit a plan when:
 | Rejection | Fix |
 |-----------|-----|
 | The manifest is not approved | Get a reviewer to add the `approval` block |
+| The manifest is not a YAML mapping, or a `source`, `target`, or `plan` block is missing | Complete the manifest header |
 | A source node has no `id`, `label`, `disposition`, or `source` provenance | Complete the node |
 | A disposition or `type` is not one of the accepted values | Use an accepted value |
+| One SAP identifier is dispositioned twice, in any combination of kinds | Give each source node exactly one entry |
+| A `superseded` node has no `superseded_by`, or names an unknown characteristic | Point it at the retained variant |
 | A retained characteristic has no `category`, or its category is not `generated` | Retain the section header as a category |
+| A node that is not `generated` declares values | Move the values to the retained node, or drop them |
+| A permitted value is dispositioned as anything but `generated` or `excluded`, or is excluded with no reason | Use `generated`, or `excluded` with a `disposition_reason` |
 | A `Picklist` characteristic has no retained values | Retain a value, or mark the characteristic `deferred` |
 | A non-`Picklist` characteristic declares values | Set `type: Picklist`, or drop the values |
 | A characteristic references an unknown or non-generated shared picklist | Declare the picklist under `picklists:` |
@@ -145,8 +151,10 @@ python scripts/validate_sfdmu_v5_datasets.py --dataset <plan.path>
 tests/test-sap-attribute-migration.sh
 ```
 
-Read `conversion-report.md` and confirm the disposition table matches what the
-reviewer approved, and that every unresolved warning is still accurate.
+Read `conversion-report.md` and confirm the **Disposition Summary** counts and the
+**Source Node Dispositions** table match what the reviewer approved, that every
+source node from the document appears exactly once, and that every unresolved
+warning is still accurate.
 
 ### 6. Load
 

@@ -200,6 +200,38 @@ run_rejection shared-picklist-not-generated.yaml "picklist 'SHARED_UNITS' is not
     "a characteristic pointing at a deferred shared picklist"
 run_rejection unused-shared-picklist.yaml "no attribute definition references" \
     "a shared picklist no characteristic references"
+run_rejection not-a-mapping.yaml "manifest must be a YAML mapping" \
+    "a manifest that is not a mapping"
+run_rejection unknown-disposition.yaml "unknown disposition 'retained'" \
+    "a disposition outside the migration vocabulary"
+run_rejection missing-source-text.yaml "missing source.text provenance" \
+    "a source node with no exact source line"
+run_rejection missing-source-page.yaml "missing source.page provenance" \
+    "a source node with no page provenance"
+run_rejection missing-source-block.yaml "missing source block" \
+    "a manifest that never names its SAP document"
+run_rejection missing-target-block.yaml "missing target block" \
+    "a manifest that never names its target Product"
+run_rejection missing-plan-block.yaml "missing plan block" \
+    "a manifest that never names its plan path"
+run_rejection duplicate-source-node-id.yaml "duplicate source node id 'CHAR_TYPE'" \
+    "one SAP identifier dispositioned twice"
+run_rejection duplicate-source-node-kind.yaml "duplicate source node id 'CAT_HEADER'" \
+    "one SAP identifier claimed by two node kinds"
+run_rejection superseded-without-replacement.yaml "superseded nodes need 'superseded_by'" \
+    "a superseded node with no retained variant"
+run_rejection superseded-by-unknown.yaml "'CHAR_TYPE_MISSING' is not a known characteristic" \
+    "a supersession trail that ends nowhere"
+run_rejection unknown-category.yaml "unknown category 'CAT_MISSING'" \
+    "a retained characteristic filed under an unknown category"
+run_rejection category-not-generated.yaml "category 'CAT_DEFERRED' is not generated" \
+    "a retained characteristic filed under a held-back section header"
+run_rejection values-on-non-generated-node.yaml "only generated characteristics may declare values" \
+    "permitted values attached to a held-back node"
+run_rejection excluded-value-without-reason.yaml "excluded values need a reason" \
+    "a dropped permitted value with no reason"
+run_rejection unknown-value-disposition.yaml "value disposition must be 'generated' or 'excluded'" \
+    "a permitted value dispositioned as a source node"
 
 echo ""
 echo "Test 10: approved deferred and source-control nodes generate no Revenue Cloud rows"
@@ -717,6 +749,92 @@ assert_contains "$RUN_SERVOMEX/conversion-report.md" "WARNING: C7900-process-app
     "the deferred process inputs are reported as unresolved"
 assert_contains "$WORK_DIR/run-servomex.log" "WARNING: C7900-process-application-inputs" \
     "the deferred process inputs warn on stdout"
+
+# --- Acceptance: the complete SERVOTOUGH dataset ---------------------------
+echo ""
+echo "Test 32: every SERVOTOUGH source node is dispositioned exactly once"
+"$PYTHON" - "$REPO_ROOT/datasets/sap/servomex-07930b1/manifest.yaml" \
+    "$RUN_SERVOMEX/conversion-report.md" >"$WORK_DIR/accountability.txt" 2>&1 <<'PY'
+import re, sys, yaml
+
+manifest = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+expected = []
+for key in ("picklists", "categories", "characteristics"):
+    expected += [node["id"] for node in manifest.get(key) or []]
+
+report = open(sys.argv[2], encoding="utf-8").read()
+table = report.split("## Source Node Dispositions", 1)[1].split("\n##", 1)[0]
+reported = re.findall(r"^\| `([^`]+)` \|", table, re.MULTILINE)
+
+print("expected", len(expected))
+print("reported", len(reported))
+print("missing", sorted(set(expected) - set(reported)))
+print("unexpected", sorted(set(reported) - set(expected)))
+print("repeated", sorted(i for i in set(reported) if reported.count(i) > 1))
+PY
+assert_contains "$WORK_DIR/accountability.txt" "missing []" \
+    "no curated source node is absent from the report"
+assert_contains "$WORK_DIR/accountability.txt" "unexpected []" \
+    "the report invents no source node"
+assert_contains "$WORK_DIR/accountability.txt" "repeated []" \
+    "no source node is dispositioned twice"
+
+echo ""
+echo "Test 33: SAP control structures are traced without reaching Revenue Cloud"
+for control in VARCOND VARCONDMM BOM ROUT C7900_DTP C7900_MTG_DTP C7900_ACC_DTP; do
+    assert_contains "$RUN_SERVOMEX/conversion-report.md" "\`$control\` |" \
+        "report accounts for $control"
+    if grep -rqF -- "$control" "$RUN_SERVOMEX"/*.csv; then
+        fail "$control produces no Revenue Cloud rows"
+    else
+        pass "$control produces no Revenue Cloud rows"
+    fi
+done
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "Confign Profiles" \
+    "report accounts for the configuration-profile node"
+
+echo ""
+echo "Test 34: the report summarizes every disposition"
+SUMMARY_SECTION="$WORK_DIR/summary-section.md"
+report_section "## Disposition Summary" >"$SUMMARY_SECTION"
+for disposition in generated excluded deferred superseded source-control; do
+    assert_contains "$SUMMARY_SECTION" "| \`$disposition\` |" \
+        "the summary counts $disposition nodes"
+done
+SUMMARY_TOTAL="$(awk -F'|' '/^\| \*\*Total\*\*/ {gsub(/ /, "", $3); print $3}' "$SUMMARY_SECTION")"
+REPORTED_TOTAL="$(awk '/^reported /{print $2}' "$WORK_DIR/accountability.txt")"
+assert_equals "$SUMMARY_TOTAL" "$REPORTED_TOTAL" \
+    "the summary total matches the disposition table"
+
+echo ""
+echo "Test 35: the plan README documents how to load, verify, and read the plan"
+SERVOMEX_README="$RUN_SERVOMEX/README.md"
+assert_contains "$SERVOMEX_README" "## Prerequisites" "README states prerequisites"
+assert_contains "$SERVOMEX_README" "## Objects" "README lists the objects in load order"
+assert_contains "$SERVOMEX_README" "parent before child" "README explains the object order"
+assert_contains "$SERVOMEX_README" "## Identity Strategy" "README explains the identity strategy"
+assert_contains "$SERVOMEX_README" "## Safety" "README states safety behavior"
+assert_contains "$SERVOMEX_README" "cci task run load_sfdmu_data" \
+    "README invokes the generic SFDMU loader"
+assert_contains "$SERVOMEX_README" "## Warnings" "README surfaces the unresolved warnings"
+assert_contains "$SERVOMEX_README" "CLASS_7930B-dependencies" \
+    "README names the unresolved dependency logic"
+assert_contains "$SERVOMEX_README" "validate_sfdmu_v5_datasets.py" \
+    "README gives the validation command"
+
+echo ""
+echo "Test 36: the committed plan matches a fresh generation of the approved manifest"
+COMMITTED_PLAN="$REPO_ROOT/$( "$PYTHON" - "$REPO_ROOT/datasets/sap/servomex-07930b1/manifest.yaml" <<'PY'
+import sys, yaml
+print(yaml.safe_load(open(sys.argv[1], encoding="utf-8"))["plan"]["path"])
+PY
+)"
+if diff -r "$COMMITTED_PLAN" "$RUN_SERVOMEX" >"$WORK_DIR/plan-drift.txt" 2>&1; then
+    pass "the committed plan is byte-identical to a fresh generation"
+else
+    fail "the committed plan is byte-identical to a fresh generation"
+    head -20 "$WORK_DIR/plan-drift.txt"
+fi
 
 echo ""
 echo "========================================="

@@ -1,0 +1,25 @@
+# Negative fixture: a manifest that never states where its plan belongs.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+source:
+  system: SAP
+  document: fixture.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"

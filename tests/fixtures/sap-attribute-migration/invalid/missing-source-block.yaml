@@ -1,0 +1,22 @@
+# Negative fixture: a manifest that never states which SAP document it converts.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-23
+
+target:
+  product_sku: 07930B1
+
+plan:
+  path: build/never-written
+
+categories:
+  - id: CAT_HEADER
+    label: Base Config
+    disposition: generated
+    source:
+      page: 1
+      text: "CAT_HEADER                      BASE CONFIG"

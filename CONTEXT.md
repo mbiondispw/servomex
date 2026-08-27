@@ -36,6 +36,7 @@ configurator attributes. Owning skill:
 | Term | Definition |
 |------|------------|
 | **Manifest** | The reviewed, approved YAML file that is the authoritative migration input. Generated SFDMU data and the conversion report are derived artifacts. |
+| **Shared Permitted-Value Set** | One Attribute Picklist declared once in the manifest and referenced by several SAP Characteristics that repeat the same options. |
 | **Disposition** | The recorded decision for a source node: `generated`, `excluded`, `deferred`, `superseded`, or `source-control`. |
 | **Source-qualified code** | A generated Revenue Cloud code namespaced by source system, class, characteristic, and value, so repeated raw SAP codes cannot collide globally. |
 | **Conversion report** | The generated Markdown record of dispositions, generated counts, exclusions, and unresolved source logic. |

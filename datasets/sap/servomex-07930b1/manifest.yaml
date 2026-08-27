@@ -4,7 +4,7 @@
 # scripts/ai/generate_sap_attribute_migration.py. Exact source text lives here;
 # generated SFDMU CSVs carry ASCII-normalized operational values.
 
-revision: 5
+revision: 6
 
 approval:
   approved: true
@@ -24,6 +24,39 @@ target:
 plan:
   path: datasets/sfdmu/servomex/en-US/servomex-sap-attributes
 
+# Shared permitted-value sets. A characteristic points at one with `picklist:`
+# instead of repeating the same options.
+picklists:
+  - id: C7900_BG_COMP_UNITS
+    label: Sample Gas Composition Units
+    description: Concentration unit shared by every sample gas component slot.
+    disposition: generated
+    disposition_reason: >-
+      The ten Stream Component Units characteristics repeat one identical
+      three-option unit set, so they share a single Attribute Picklist.
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_UNITS            Stream Component 1 Units"
+    values:
+      - code: "1"
+        label: "% vol"
+        disposition: generated
+        source:
+          page: 4
+          text: "1                           % vol"
+      - code: "2"
+        label: "ppmv"
+        disposition: generated
+        source:
+          page: 4
+          text: "2                           ppmv"
+      - code: "3"
+        label: "mg/Nm3"
+        disposition: generated
+        source:
+          page: 4
+          text: "3                           mg/Nm3"
+
 categories:
   - id: C7900_PART_HEADER
     label: Analyser Base Config
@@ -35,6 +68,38 @@ categories:
     source:
       page: 1
       text: "C7900_PART_HEADER               ANALYSER BASE CONFIG"
+
+  - id: C7900_GAS_MEASURMENT_HEADER
+    label: Measurement
+    disposition: excluded
+    disposition_reason: >-
+      Section header with no member characteristics. The measurement choices it
+      names precede it in the source, under ANALYSER BASE CONFIG.
+    source:
+      page: 3
+      text: "C7900_GAS_MEASURMENT_HEADER     MEASUREMENT"
+
+  - id: C7900_PROCESS_HEADER
+    label: Process Details
+    disposition: deferred
+    disposition_reason: >-
+      Section header for the process application inputs. Becomes an Attribute
+      Category once its deferred temperature, pressure, and dust-loading inputs
+      have agreed Revenue Cloud data types.
+    source:
+      page: 3
+      text: "C7900_PROCESS_HEADER            PROCESS DETAILS"
+
+  - id: C7900_BACKGROUND_GAS_HEADER
+    label: Sample Gas Composition
+    description: Composition of the sample gas the analyser must tolerate.
+    disposition: generated
+    disposition_reason: >-
+      Section header characteristic. Becomes an Attribute Category; its dummy
+      permitted value "1 / ." generates no records.
+    source:
+      page: 4
+      text: "C7900_BACKGROUND_GAS_HEADER     SAMPLE GAS COMPOSITION"
 
   - id: C7900_OPTICAL_HEADER
     label: Installation Details
@@ -820,6 +885,860 @@ characteristics:
 
   # --- INSTALLATION DETAILS ------------------------------------------------
 
+  # --- Process application inputs ------------------------------------------
+
+  - id: C7900_PROCESS_TEMP_MAX
+    label: Process Temperature Max
+    disposition: deferred
+    disposition_reason: >-
+      Engineering temperature input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_TEMP_MAX          Process Temperature Max"
+
+  - id: C7900_PROCESS_TEMP_TYP
+    label: Process Temperature Typical
+    disposition: deferred
+    disposition_reason: >-
+      Engineering temperature input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_TEMP_TYP          Process Temperature Typical"
+
+  - id: C7900_PROCESS_TEMP_MIN
+    label: Process Temperature Min
+    disposition: deferred
+    disposition_reason: >-
+      Engineering temperature input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_TEMP_MIN          Process Temperature Min"
+
+  - id: C7900_PROCESS_PRESSURE_MAX
+    label: Process Pressure Max (Abs)
+    disposition: deferred
+    disposition_reason: >-
+      Engineering pressure input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_PRESSURE_MAX      Process Pressure Max (Abs)"
+
+  - id: C7900_PROCESS_PRESSURE_TYP
+    label: Process Pressure Typical (Abs)
+    disposition: deferred
+    disposition_reason: >-
+      Engineering pressure input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_PRESSURE_TYP      Process Pressure Typical (Abs)"
+
+  - id: C7900_PROCESS_PRESSURE_MIN
+    label: Process Pressure Min (Abs)
+    disposition: deferred
+    disposition_reason: >-
+      Engineering pressure input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_PROCESS_PRESSURE_MIN      Process Pressure Min (Abs)"
+
+  - id: C7900_DUST_LOADING_MAX
+    label: Dust Loading Max
+    disposition: deferred
+    disposition_reason: >-
+      Engineering dust loading input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_DUST_LOADING_MAX          Dust Loading Max"
+
+  - id: C7900_DUST_LOADING_TYP
+    label: Dust Loading Typical
+    disposition: deferred
+    disposition_reason: >-
+      Engineering dust loading input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_DUST_LOADING_TYP          Dust Loading Typical"
+
+  - id: C7900_DUST_LOADING_MIN
+    label: Dust Loading Min
+    disposition: deferred
+    disposition_reason: >-
+      Engineering dust loading input. The source states no unit, no permitted
+      values, and no scale, so its Revenue Cloud data type cannot be confirmed.
+    source:
+      page: 4
+      text: "C7900_DUST_LOADING_MIN          Dust Loading Min"
+
+  # --- Sample Gas Composition ----------------------------------------------
+
+  - id: C7900_BG_COMP1_TYPE_2
+    label: Stream Component 1
+    description: Sample gas component 1 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 11
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_TYPE_2           Stream Component 1"
+
+  - id: C7900_BG_COMP1_UNITS
+    label: Stream Component 1 Units
+    description: Concentration unit reported for sample gas component 1.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 12
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_UNITS            Stream Component 1 Units"
+
+  - id: C7900_BG_COMP1_HIGH
+    label: Stream 1 High Concentration
+    description: Highest expected concentration of sample gas component 1.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 13
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_HIGH             Stream 1 High Concentration"
+
+  - id: C7900_BG_COMP1_NORMAL
+    label: Stream 1 Normal Concentration
+    description: Normal expected concentration of sample gas component 1.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 14
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_NORMAL           Stream 1 Normal Concentration"
+
+  - id: C7900_BG_COMP1_LOW
+    label: Stream 1 Low Concentration
+    description: Lowest expected concentration of sample gas component 1.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 15
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_LOW              Stream 1 Low Concentration"
+
+  - id: C7900_BG_COMP2_TYPE_2
+    label: Stream Component 2
+    description: Sample gas component 2 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 16
+    source:
+      page: 4
+      text: "C7900_BG_COMP2_TYPE_2           Stream Component 2"
+
+  - id: C7900_BG_COMP2_UNITS
+    label: Stream Component 2 Units
+    description: Concentration unit reported for sample gas component 2.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 17
+    source:
+      page: 4
+      text: "C7900_BG_COMP2_UNITS            Stream Component 2 Units"
+
+  - id: C7900_BG_COMP2_HIGH
+    label: Stream 2 High Concentration
+    description: Highest expected concentration of sample gas component 2.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 18
+    source:
+      page: 4
+      text: "C7900_BG_COMP2_HIGH             Stream 2 High Concentration"
+
+  - id: C7900_BG_COMP2_NORMAL
+    label: Stream 2 Normal Concentration
+    description: Normal expected concentration of sample gas component 2.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 19
+    source:
+      page: 4
+      text: "C7900_BG_COMP2_NORMAL           Stream 2 Normal Concentration"
+
+  - id: C7900_BG_COMP2_LOW
+    label: Stream 2 Low Concentration
+    description: Lowest expected concentration of sample gas component 2.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 20
+    source:
+      page: 4
+      text: "C7900_BG_COMP2_LOW              Stream 2 Low Concentration"
+
+  - id: C7900_BG_COMP3_TYPE_2
+    label: Stream Component 3
+    description: Sample gas component 3 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 21
+    source:
+      page: 4
+      text: "C7900_BG_COMP3_TYPE_2           Stream Component 3"
+
+  - id: C7900_BG_COMP3_UNITS
+    label: Stream Component 3 Units
+    description: Concentration unit reported for sample gas component 3.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 22
+    source:
+      page: 4
+      text: "C7900_BG_COMP3_UNITS            Stream Component 3 Units"
+
+  - id: C7900_BG_COMP3_HIGH
+    label: Stream 3 High Concentration
+    description: Highest expected concentration of sample gas component 3.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 23
+    source:
+      page: 4
+      text: "C7900_BG_COMP3_HIGH             Stream 3 High Concentration"
+
+  - id: C7900_BG_COMP3_NORMAL
+    label: Stream 3 Normal Concentration
+    description: Normal expected concentration of sample gas component 3.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 24
+    source:
+      page: 4
+      text: "C7900_BG_COMP3_NORMAL           Stream 3 Normal Concentration"
+
+  - id: C7900_BG_COMP3_LOW
+    label: Stream 3 Low Concentration
+    description: Lowest expected concentration of sample gas component 3.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 25
+    source:
+      page: 4
+      text: "C7900_BG_COMP3_LOW              Stream 3 Low Concentration"
+
+  - id: C7900_BG_COMP4_TYPE_2
+    label: Stream Component 4
+    description: Sample gas component 4 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 26
+    source:
+      page: 4
+      text: "C7900_BG_COMP4_TYPE_2           Stream Component 4"
+
+  - id: C7900_BG_COMP4_UNITS
+    label: Stream Component 4 Units
+    description: Concentration unit reported for sample gas component 4.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 27
+    source:
+      page: 4
+      text: "C7900_BG_COMP4_UNITS            Stream Component 4 Units"
+
+  - id: C7900_BG_COMP4_HIGH
+    label: Stream 4 High Concentration
+    description: Highest expected concentration of sample gas component 4.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 28
+    source:
+      page: 4
+      text: "C7900_BG_COMP4_HIGH             Stream 4 High Concentration"
+
+  - id: C7900_BG_COMP4_NORMAL
+    label: Stream 4 Normal Concentration
+    description: Normal expected concentration of sample gas component 4.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 29
+    source:
+      page: 4
+      text: "C7900_BG_COMP4_NORMAL           Stream 4 Normal Concentration"
+
+  - id: C7900_BG_COMP4_LOW
+    label: Stream 4 Low Concentration
+    description: Lowest expected concentration of sample gas component 4.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 30
+    source:
+      page: 4
+      text: "C7900_BG_COMP4_LOW              Stream 4 Low Concentration"
+
+  - id: C7900_BG_COMP5_TYPE_2
+    label: Stream Component 5
+    description: Sample gas component 5 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 31
+    source:
+      page: 4
+      text: "C7900_BG_COMP5_TYPE_2           Stream Component 5"
+
+  - id: C7900_BG_COMP5_UNITS
+    label: Stream Component 5 Units
+    description: Concentration unit reported for sample gas component 5.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 32
+    source:
+      page: 4
+      text: "C7900_BG_COMP5_UNITS            Stream Component 5 Units"
+
+  - id: C7900_BG_COMP5_HIGH
+    label: Stream 5 High Concentration
+    description: Highest expected concentration of sample gas component 5.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 33
+    source:
+      page: 4
+      text: "C7900_BG_COMP5_HIGH             Stream 5 High Concentration"
+
+  - id: C7900_BG_COMP5_NORMAL
+    label: Stream 5 Normal Concentration
+    description: Normal expected concentration of sample gas component 5.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 34
+    source:
+      page: 5
+      text: "C7900_BG_COMP5_NORMAL           Stream 5 Normal Concentration"
+
+  - id: C7900_BG_COMP5_LOW
+    label: Stream 5 Low Concentration
+    description: Lowest expected concentration of sample gas component 5.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 35
+    source:
+      page: 5
+      text: "C7900_BG_COMP5_LOW              Stream 5 Low Concentration"
+
+  - id: C7900_BG_COMP6_TYPE_2
+    label: Stream Component 6
+    description: Sample gas component 6 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 36
+    source:
+      page: 5
+      text: "C7900_BG_COMP6_TYPE_2           Stream Component 6"
+
+  - id: C7900_BG_COMP6_UNITS
+    label: Stream Component 6 Units
+    description: Concentration unit reported for sample gas component 6.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 37
+    source:
+      page: 5
+      text: "C7900_BG_COMP6_UNITS            Stream Component 6 Units"
+
+  - id: C7900_BG_COMP6_HIGH
+    label: Stream 6 High Concentration
+    description: Highest expected concentration of sample gas component 6.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 38
+    source:
+      page: 5
+      text: "C7900_BG_COMP6_HIGH             Stream 6 High Concentration"
+
+  - id: C7900_BG_COMP6_NORMAL
+    label: Stream 6 Normal Concentration
+    description: Normal expected concentration of sample gas component 6.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 39
+    source:
+      page: 5
+      text: "C7900_BG_COMP6_NORMAL           Stream 6 Normal Concentration"
+
+  - id: C7900_BG_COMP6_LOW
+    label: Stream 6 Low Concentration
+    description: Lowest expected concentration of sample gas component 6.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 40
+    source:
+      page: 5
+      text: "C7900_BG_COMP6_LOW              Stream 6 Low Concentration"
+
+  - id: C7900_BG_COMP7_TYPE_2
+    label: Stream Component 7
+    description: Sample gas component 7 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 41
+    source:
+      page: 5
+      text: "C7900_BG_COMP7_TYPE_2           Stream Component 7"
+
+  - id: C7900_BG_COMP7_UNITS
+    label: Stream Component 7 Units
+    description: Concentration unit reported for sample gas component 7.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 42
+    source:
+      page: 5
+      text: "C7900_BG_COMP7_UNITS            Stream Component 7 Units"
+
+  - id: C7900_BG_COMP7_HIGH
+    label: Stream 7 High Concentration
+    description: Highest expected concentration of sample gas component 7.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 43
+    source:
+      page: 5
+      text: "C7900_BG_COMP7_HIGH             Stream 7 High Concentration"
+
+  - id: C7900_BG_COMP7_NORMAL
+    label: Stream 7 Normal Concentration
+    description: Normal expected concentration of sample gas component 7.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 44
+    source:
+      page: 5
+      text: "C7900_BG_COMP7_NORMAL           Stream 7 Normal Concentration"
+
+  - id: C7900_BG_COMP7_LOW
+    label: Stream 7 Low Concentration
+    description: Lowest expected concentration of sample gas component 7.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 45
+    source:
+      page: 5
+      text: "C7900_BG_COMP7_LOW              Stream 7 Low Concentration"
+
+  - id: C7900_BG_COMP8_TYPE_2
+    label: Stream Component 8
+    description: Sample gas component 8 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 46
+    source:
+      page: 5
+      text: "C7900_BG_COMP8_TYPE_2           Stream Component 8"
+
+  - id: C7900_BG_COMP8_UNITS
+    label: Stream Component 8 Units
+    description: Concentration unit reported for sample gas component 8.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 47
+    source:
+      page: 5
+      text: "C7900_BG_COMP8_UNITS            Stream Component 8 Units"
+
+  - id: C7900_BG_COMP8_HIGH
+    label: Stream 8 High Concentration
+    description: Highest expected concentration of sample gas component 8.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 48
+    source:
+      page: 5
+      text: "C7900_BG_COMP8_HIGH             Stream 8 High Concentration"
+
+  - id: C7900_BG_COMP8_NORMAL
+    label: Stream 8 Normal Concentration
+    description: Normal expected concentration of sample gas component 8.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 49
+    source:
+      page: 5
+      text: "C7900_BG_COMP8_NORMAL           Stream 8 Normal Concentration"
+
+  - id: C7900_BG_COMP8_LOW
+    label: Stream 8 Low Concentration
+    description: Lowest expected concentration of sample gas component 8.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 50
+    source:
+      page: 5
+      text: "C7900_BG_COMP8_LOW              Stream 8 Low Concentration"
+
+  - id: C7900_BG_COMP9_TYPE_2
+    label: Stream Component 9
+    description: Sample gas component 9 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 51
+    source:
+      page: 5
+      text: "C7900_BG_COMP9_TYPE_2           Stream Component 9"
+
+  - id: C7900_BG_COMP9_UNITS
+    label: Stream Component 9 Units
+    description: Concentration unit reported for sample gas component 9.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 52
+    source:
+      page: 5
+      text: "C7900_BG_COMP9_UNITS            Stream Component 9 Units"
+
+  - id: C7900_BG_COMP9_HIGH
+    label: Stream 9 High Concentration
+    description: Highest expected concentration of sample gas component 9.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 53
+    source:
+      page: 5
+      text: "C7900_BG_COMP9_HIGH             Stream 9 High Concentration"
+
+  - id: C7900_BG_COMP9_NORMAL
+    label: Stream 9 Normal Concentration
+    description: Normal expected concentration of sample gas component 9.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 54
+    source:
+      page: 5
+      text: "C7900_BG_COMP9_NORMAL           Stream 9 Normal Concentration"
+
+  - id: C7900_BG_COMP9_LOW
+    label: Stream 9 Low Concentration
+    description: Lowest expected concentration of sample gas component 9.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 55
+    source:
+      page: 5
+      text: "C7900_BG_COMP9_LOW              Stream 9 Low Concentration"
+
+  - id: C7900_BG_COMP10_TYPE_2
+    label: Stream Component 10
+    description: Sample gas component 10 present in the measured stream.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      declares the component slot with no permitted values, so the component
+      name is captured as free text.
+    type: Text
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 56
+    source:
+      page: 5
+      text: "C7900_BG_COMP10_TYPE_2          Stream Component 10"
+
+  - id: C7900_BG_COMP10_UNITS
+    label: Stream Component 10 Units
+    description: Concentration unit reported for sample gas component 10.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition. The source
+      states the three permitted units, which every slot shares through one
+      Attribute Picklist.
+    type: Picklist
+    picklist: C7900_BG_COMP_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 57
+    source:
+      page: 5
+      text: "C7900_BG_COMP10_UNITS           Stream Component 10 Units"
+
+  - id: C7900_BG_COMP10_HIGH
+    label: Stream 10 High Concentration
+    description: Highest expected concentration of sample gas component 10.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 58
+    source:
+      page: 5
+      text: "C7900_BG_COMP10_HIGH            Stream 10 High Concentration"
+
+  - id: C7900_BG_COMP10_NORMAL
+    label: Stream 10 Normal Concentration
+    description: Normal expected concentration of sample gas component 10.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 59
+    source:
+      page: 5
+      text: "C7900_BG_COMP10_NORMAL          Stream 10 Normal Concentration"
+
+  - id: C7900_BG_COMP10_LOW
+    label: Stream 10 Low Concentration
+    description: Lowest expected concentration of sample gas component 10.
+    disposition: generated
+    disposition_reason: >-
+      Approved process-input exception for Sample Gas Composition.
+      Concentration is unambiguously numeric because the paired units
+      characteristic carries the unit.
+    type: Number
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 60
+    source:
+      page: 5
+      text: "C7900_BG_COMP10_LOW             Stream 10 Low Concentration"
+
   - id: C7900_TU_FLG_OPT_PATH_LENGTH
     label: TU Flange Opt Path Length - L1
     disposition: deferred
@@ -873,7 +1792,7 @@ characteristics:
       required, read-only, and defaulted.
     type: Picklist
     category: C7900_OPTICAL_HEADER
-    sequence: 11
+    sequence: 61
     source:
       page: 5
       text: "C7900_ORINGS                    Instrument Seal Type"
@@ -892,7 +1811,7 @@ characteristics:
     disposition_reason: Retained selling choice for the supplied beam optics.
     type: Picklist
     category: C7900_OPTICAL_HEADER
-    sequence: 12
+    sequence: 62
     source:
       page: 6
       text: "C7900B_BEAM_DIVERGENCE          Beam Divergence"
@@ -936,7 +1855,7 @@ characteristics:
     disposition_reason: Retained selling choice for the internal span-check gas cell.
     type: Picklist
     category: C7900_OPTICAL_HEADER
-    sequence: 13
+    sequence: 63
     source:
       page: 6
       text: "C7900B_INTGRATED_SPAN_CHECK     Internal Gas Cell"
@@ -965,7 +1884,7 @@ characteristics:
       required, read-only, and defaulted.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 14
+    sequence: 64
     source:
       page: 6
       text: "C7900B_MTG_BASE                 Type"
@@ -984,7 +1903,7 @@ characteristics:
     disposition_reason: Retained selling choice for the isolation flange.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 15
+    sequence: 65
     source:
       page: 6
       text: "C7900B_TPM110                   Isolation Flange"
@@ -1021,7 +1940,7 @@ characteristics:
     disposition_reason: Retained selling choice for the transmitter mounting.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 16
+    sequence: 66
     source:
       page: 6
       text: "C7900B_TPM120                   Tx Mounting Type"
@@ -1058,7 +1977,7 @@ characteristics:
     disposition_reason: Retained selling choice for the transmitter flange size.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 17
+    sequence: 67
     source:
       page: 6
       text: "C7900B_TPM130                   Tx Flange Size"
@@ -1113,7 +2032,7 @@ characteristics:
     disposition_reason: Retained selling choice for the receiver mounting.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 18
+    sequence: 68
     source:
       page: 6
       text: "C7900B_TPM140                   Rx Mounting Type"
@@ -1144,7 +2063,7 @@ characteristics:
     disposition_reason: Retained selling choice for the receiver flange size.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 19
+    sequence: 69
     source:
       page: 6
       text: "C7900B_TPM150                   Rx Flange Size"
@@ -1199,7 +2118,7 @@ characteristics:
     disposition_reason: Retained selling choice for the sample-wetted seal material.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 20
+    sequence: 70
     source:
       page: 6
       text: "C7900B_TPM160                   Seal Material (Sample Wetted)"
@@ -1232,7 +2151,7 @@ characteristics:
     disposition_reason: Retained selling choice for the insertion tube.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 21
+    sequence: 71
     source:
       page: 7
       text: "C7900B_TPM170                   Insertion Tube"
@@ -1276,7 +2195,7 @@ characteristics:
     disposition_reason: Retained selling choice for the thermal break.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 22
+    sequence: 72
     source:
       page: 7
       text: "C7900B_TPM180                   Thermal Break"
@@ -1331,7 +2250,7 @@ characteristics:
     disposition_reason: Retained selling choice for the inline span cell.
     type: Picklist
     category: C7900_MOUNTING_HEADER
-    sequence: 23
+    sequence: 73
     source:
       page: 7
       text: "C7900B_TPM190                   Inline Span Cell"
@@ -1376,7 +2295,7 @@ characteristics:
     disposition_reason: Retained selling choice for the window purge supply.
     type: Picklist
     category: C7900_PURGE_HEADER
-    sequence: 24
+    sequence: 74
     source:
       page: 7
       text: "C7900_OPTICAL_PURGING           Window Purging"
@@ -1407,7 +2326,7 @@ characteristics:
     disposition_reason: Retained selling choice for the measurement purge supply.
     type: Picklist
     category: C7900_PURGE_HEADER
-    sequence: 25
+    sequence: 75
     source:
       page: 7
       text: "C7900_PURGE_GAS_FILTRATION      Measurement Purging"
@@ -1444,7 +2363,7 @@ characteristics:
     disposition_reason: Retained selling choice for the enclosure purge supply.
     type: Picklist
     category: C7900_PURGE_HEADER
-    sequence: 26
+    sequence: 76
     source:
       page: 7
       text: "C7900_INSTRUMENT_PURGING        Environment Purging"
@@ -1475,7 +2394,7 @@ characteristics:
     disposition_reason: Retained selling choice for the purge adaptor thread form.
     type: Picklist
     category: C7900_PURGE_HEADER
-    sequence: 27
+    sequence: 77
     source:
       page: 7
       text: "C7900_PURGE_FITTING_TYPE        Purge Adaptors"
@@ -1517,7 +2436,7 @@ characteristics:
     disposition_reason: Retained selling choice for the purge panel.
     type: Picklist
     category: C7900_PURGE_HEADER
-    sequence: 28
+    sequence: 78
     source:
       page: 8
       text: "C7900_PURGE_PANEL               Purge Panel"
@@ -1588,7 +2507,7 @@ characteristics:
     disposition_reason: Retained selling choice for the electrical supply.
     type: Picklist
     category: C7900_INPUT_OUTPUT_HEADER
-    sequence: 29
+    sequence: 79
     source:
       page: 8
       text: "C7900B_SUPPLY_VOLTAGE           Supply Voltage"
@@ -1613,7 +2532,7 @@ characteristics:
     disposition_reason: Retained selling choice for the analogue output count.
     type: Picklist
     category: C7900_INPUT_OUTPUT_HEADER
-    sequence: 30
+    sequence: 80
     source:
       page: 8
       text: "C7900B_4_20MA_OP                4-20mA Outputs"
@@ -1638,7 +2557,7 @@ characteristics:
     disposition_reason: Retained selling choice for the analogue input count.
     type: Picklist
     category: C7900_INPUT_OUTPUT_HEADER
-    sequence: 31
+    sequence: 81
     source:
       page: 8
       text: "C7900B_4_20MA_IP                4-20mA Inputs"
@@ -1663,7 +2582,7 @@ characteristics:
     disposition_reason: Retained selling choice for the alarm output count.
     type: Picklist
     category: C7900_INPUT_OUTPUT_HEADER
-    sequence: 32
+    sequence: 82
     source:
       page: 8
       text: "C7900B_ALARM_OP                 Alarm Outputs"
@@ -1692,7 +2611,7 @@ characteristics:
       attribute is a fixed, visible fact rather than a choice.
     type: Picklist
     category: C7900_MANUALS_HEADER
-    sequence: 33
+    sequence: 83
     source:
       page: 8
       text: "C7900_USER_MANUALS              User / Installation"
@@ -1711,7 +2630,7 @@ characteristics:
     disposition_reason: Retained selling choice for the service manual.
     type: Picklist
     category: C7900_MANUALS_HEADER
-    sequence: 34
+    sequence: 84
     source:
       page: 8
       text: "C7900_SERVICE_MANUALS           Service"
@@ -1736,7 +2655,7 @@ characteristics:
     disposition_reason: Retained selling choice for the functional safety manual.
     type: Picklist
     category: C7900_MANUALS_HEADER
-    sequence: 35
+    sequence: 85
     source:
       page: 8
       text: "C7900_FUN_SAFETY_MANUAL         Functional Safety"
@@ -1763,7 +2682,7 @@ characteristics:
     disposition_reason: Retained selling choice for the alignment tool.
     type: Picklist
     category: C7900_ACCESSORIES_HEADER
-    sequence: 36
+    sequence: 86
     source:
       page: 8
       text: "C7900_ALIGNMENT_TOOLS           Alignment Tool"
@@ -1800,7 +2719,7 @@ characteristics:
     disposition_reason: Retained selling choice for the calibration cell kit.
     type: Picklist
     category: C7900_ACCESSORIES_HEADER
-    sequence: 37
+    sequence: 87
     source:
       page: 9
       text: "C7900_CALIBRATION_CELL          Calibration Cell Kit"
@@ -1843,7 +2762,7 @@ characteristics:
     disposition_reason: Retained selling choice for the interconnection cable supply.
     type: Picklist
     category: C7900_ACCESSORIES_HEADER
-    sequence: 38
+    sequence: 88
     source:
       page: 9
       text: "C7900_INTERCONNECT_CABLE        Interconnection cable"
@@ -1870,7 +2789,7 @@ characteristics:
     disposition_reason: Retained selling choice for the interconnection cable length.
     type: Picklist
     category: C7900_ACCESSORIES_HEADER
-    sequence: 39
+    sequence: 89
     source:
       page: 9
       text: "C7900_INTERCONNECT_CABLE_QTY    Interconnection Cable length"
@@ -1954,3 +2873,9 @@ unresolved:
       measurements, but the source states no unit, no permitted values, and no
       data type. They are deferred, so the retained Total Path Length band is
       the only optical-length choice the configurator offers.
+
+  - id: C7900-process-application-inputs
+    reason: >-
+      Process temperature, process pressure, and dust loading are quoted as
+      application inputs with no unit, permitted values, or scale. They are
+      deferred and generate no Revenue Cloud rows.

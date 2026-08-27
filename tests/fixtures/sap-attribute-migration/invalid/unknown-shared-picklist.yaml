@@ -1,0 +1,60 @@
+# Negative fixture: a characteristic points at a shared picklist that the
+# manifest never declares, so its permitted values would vanish silently.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-08-27
+
+source:
+  system: SAP
+  document: 07930B1 VC.pdf
+  sap_product: 07930B1
+  sap_class: CLASS_7930B
+
+target:
+  product_sku: 07930B1
+  product_classification_name: NGL Lase 3 (B1)
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-sap-attributes
+
+picklists:
+  - id: C7900_BG_COMP_UNITS
+    label: Sample Gas Composition Units
+    disposition: generated
+    disposition_reason: Shared unit set.
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_UNITS            Stream Component 1 Units"
+    values:
+      - code: "1"
+        label: "% vol"
+        disposition: generated
+        source:
+          page: 4
+          text: "1                           % vol"
+
+categories:
+  - id: C7900_BACKGROUND_GAS_HEADER
+    label: Sample Gas Composition
+    disposition: generated
+    disposition_reason: Section header characteristic.
+    source:
+      page: 4
+      text: "C7900_BACKGROUND_GAS_HEADER     SAMPLE GAS COMPOSITION"
+
+characteristics:
+  - id: C7900_BG_COMP1_UNITS
+    label: Stream Component 1 Units
+    disposition: generated
+    disposition_reason: Retained unit selector.
+    type: Picklist
+    picklist: MISSING_UNITS
+    category: C7900_BACKGROUND_GAS_HEADER
+    sequence: 1
+    source:
+      page: 4
+      text: "C7900_BG_COMP1_UNITS            Stream Component 1 Units"

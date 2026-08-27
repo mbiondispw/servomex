@@ -38,6 +38,15 @@ assert_absent() {
     if grep -qF -- "$needle" "$file"; then fail "$description"; else pass "$description"; fi
 }
 
+assert_equals() {
+    local actual="$1" expected="$2" description="$3"
+    if [[ "$actual" == "$expected" ]]; then
+        pass "$description"
+    else
+        fail "$description (expected '$expected', got '$actual')"
+    fi
+}
+
 echo "========================================="
 echo "SAP product attribute migration generator"
 echo "========================================="
@@ -178,6 +187,10 @@ run_rejection values-without-picklist.yaml "only picklist characteristics may de
     "permitted values with nowhere to live"
 run_rejection ambiguous-raw-code.yaml "ambiguous raw SAP code" \
     "a raw SAP code used directly as a record identity"
+run_rejection unknown-shared-picklist.yaml "unknown picklist 'MISSING_UNITS'" \
+    "a characteristic pointing at a shared picklist that does not exist"
+run_rejection shared-picklist-and-values.yaml "may not also declare values" \
+    "a characteristic declaring both a shared picklist and inline values"
 
 echo ""
 echo "Test 10: approved deferred and source-control nodes generate no Revenue Cloud rows"
@@ -497,13 +510,13 @@ assert_sequence() {
     fi
 }
 
-assert_sequence C7900_USER_MANUALS 33
-assert_sequence C7900_SERVICE_MANUALS 34
-assert_sequence C7900_FUN_SAFETY_MANUAL 35
-assert_sequence C7900_ALIGNMENT_TOOLS 36
-assert_sequence C7900_CALIBRATION_CELL 37
-assert_sequence C7900_INTERCONNECT_CABLE 38
-assert_sequence C7900_INTERCONNECT_CABLE_QTY 39
+assert_sequence C7900_USER_MANUALS 83
+assert_sequence C7900_SERVICE_MANUALS 84
+assert_sequence C7900_FUN_SAFETY_MANUAL 85
+assert_sequence C7900_ALIGNMENT_TOOLS 86
+assert_sequence C7900_CALIBRATION_CELL 87
+assert_sequence C7900_INTERCONNECT_CABLE 88
+assert_sequence C7900_INTERCONNECT_CABLE_QTY 89
 
 echo ""
 echo "Test 24: fixed manual facts are required, read-only, and defaulted"
@@ -568,6 +581,130 @@ else
 fi
 assert_absent "$RUN_SERVOMEX/AttributePicklistValue.csv" "Not Used" \
     "no deprecated option reaches an active picklist"
+
+echo ""
+echo "Test 28: the approved SERVOTOUGH manifest converts all ten Sample Gas Composition slots"
+assert_contains "$RUN_SERVOMEX/AttributeCategory.csv" \
+    "SAP-CLASS_7930B-C7900_BACKGROUND_GAS_HEADER,Sample Gas Composition" \
+    "the background gas section header becomes the Sample Gas Composition category"
+
+for slot in 1 2 3 4 5 6 7 8 9 10; do
+    for part in TYPE_2 UNITS HIGH NORMAL LOW; do
+        characteristic="C7900_BG_COMP${slot}_${part}"
+        code="SAP-CLASS_7930B-$characteristic"
+        assert_contains "$RUN_SERVOMEX/AttributeDefinition.csv" "$code," \
+            "$characteristic has an attribute definition"
+        assert_contains "$RUN_SERVOMEX/AttributeCategoryAttribute.csv" \
+            "SAP-CLASS_7930B-C7900_BACKGROUND_GAS_HEADER;$code" \
+            "$characteristic sits in Sample Gas Composition"
+        assert_contains "$RUN_SERVOMEX/ProductClassificationAttr.csv" \
+            "$code,SAP-CLASS_7930B,SAP-CLASS_7930B-C7900_BACKGROUND_GAS_HEADER,$code," \
+            "$characteristic is assigned at classification level"
+        assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+            "$code-07930B1,07930B1,$code," \
+            "$characteristic is bound to product 07930B1"
+    done
+done
+
+assert_sequence C7900_BG_COMP1_TYPE_2 11
+assert_sequence C7900_BG_COMP1_LOW 15
+assert_sequence C7900_BG_COMP10_LOW 60
+assert_sequence C7900_ORINGS 61
+
+echo ""
+echo "Test 29: the ten unit attributes share one Attribute Picklist"
+UNITS_PL="SAP-CLASS_7930B-C7900_BG_COMP_UNITS-PL"
+UNIT_PICKLIST_ROWS="$(grep -cF "$UNITS_PL," "$RUN_SERVOMEX/AttributePicklist.csv")"
+assert_equals "$UNIT_PICKLIST_ROWS" "1" "exactly one composition-unit picklist is generated"
+
+for slot in 1 2 3 4 5 6 7 8 9 10; do
+    assert_contains "$RUN_SERVOMEX/AttributeDefinition.csv" \
+        "$UNITS_PL,C7900_BG_COMP${slot}_UNITS," \
+        "Stream Component $slot Units reuses the shared composition-unit picklist"
+    assert_absent "$RUN_SERVOMEX/AttributePicklist.csv" \
+        "SAP-CLASS_7930B-C7900_BG_COMP${slot}_UNITS-PL," \
+        "Stream Component $slot Units mints no picklist of its own"
+done
+
+sequence=0
+for unit in "% vol" "ppmv" "mg/Nm3"; do
+    sequence=$((sequence + 1))
+    assert_contains "$RUN_SERVOMEX/AttributePicklistValue.csv" \
+        "SAP-CLASS_7930B-C7900_BG_COMP_UNITS-$sequence,$unit,$unit,$unit,$sequence,$UNITS_PL,$sequence,false,Active" \
+        "shared unit $unit is source-qualified and keeps its SAP code in Abbreviation"
+done
+UNIT_VALUE_ROWS="$(grep -cF "$UNITS_PL," "$RUN_SERVOMEX/AttributePicklistValue.csv")"
+assert_equals "$UNIT_VALUE_ROWS" "3" "the shared unit picklist holds exactly three values"
+
+echo ""
+echo "Test 30: composition slots are typed as source-compatible text and numbers"
+attribute_data_type() {
+    "$PYTHON" - "$RUN_SERVOMEX/AttributeDefinition.csv" "SAP-CLASS_7930B-$1" <<'PY'
+import csv, sys
+with open(sys.argv[1], newline="") as handle:
+    for row in csv.DictReader(handle):
+        if row["Code"] == sys.argv[2]:
+            print(f"{row['DataType']}|{row['Picklist.Code']}|{row['IsRequired']}")
+            break
+PY
+}
+
+for slot in 1 2 3 4 5 6 7 8 9 10; do
+    assert_equals "$(attribute_data_type "C7900_BG_COMP${slot}_TYPE_2")" "Text||false" \
+        "Stream Component $slot is optional free text"
+    assert_equals "$(attribute_data_type "C7900_BG_COMP${slot}_UNITS")" "Picklist|$UNITS_PL|false" \
+        "Stream Component $slot Units is an optional shared picklist"
+    for level in HIGH NORMAL LOW; do
+        assert_equals "$(attribute_data_type "C7900_BG_COMP${slot}_${level}")" "Number||false" \
+            "Stream $slot $level Concentration is an optional number"
+    done
+done
+
+for level in "High" "Normal" "Low"; do
+    assert_contains "$RUN_SERVOMEX/ProductAttributeDefinition.csv" \
+        "Stream 1 $level Concentration,,false,false,false,false," \
+        "Stream 1 $level Concentration stays optional and editable with no invented default"
+done
+
+echo ""
+echo "Test 31: untyped process application inputs stay deferred and separated in the report"
+report_section() {
+    awk -v heading="$1" '$0 == heading {inside = 1; next} /^## / {inside = 0} inside' \
+        "$RUN_SERVOMEX/conversion-report.md"
+}
+
+DEFERRED_SECTION="$WORK_DIR/deferred-section.md"
+report_section "## Deferred Source Nodes" >"$DEFERRED_SECTION"
+COMPOSITION_SECTION="$WORK_DIR/composition-section.md"
+awk '/^### Sample Gas Composition/ {inside = 1; next} /^#{2,3} / {inside = 0} inside' \
+    "$RUN_SERVOMEX/conversion-report.md" >"$COMPOSITION_SECTION"
+
+for deferred in C7900_PROCESS_HEADER C7900_PROCESS_TEMP_MAX C7900_PROCESS_TEMP_TYP \
+    C7900_PROCESS_TEMP_MIN C7900_PROCESS_PRESSURE_MAX C7900_PROCESS_PRESSURE_TYP \
+    C7900_PROCESS_PRESSURE_MIN C7900_DUST_LOADING_MAX C7900_DUST_LOADING_TYP \
+    C7900_DUST_LOADING_MIN; do
+    assert_contains "$DEFERRED_SECTION" "\`$deferred\`" \
+        "the report defers $deferred in its own section"
+    if grep -rqF -- "$deferred" "$RUN_SERVOMEX"/*.csv; then
+        fail "$deferred produces no Revenue Cloud rows"
+    else
+        pass "$deferred produces no Revenue Cloud rows"
+    fi
+done
+
+for generated in C7900_BG_COMP1_TYPE_2 C7900_BG_COMP10_LOW C7900_BG_COMP5_UNITS; do
+    assert_contains "$COMPOSITION_SECTION" "\`$generated\`" \
+        "the report lists $generated as a generated gas-composition input"
+    assert_absent "$DEFERRED_SECTION" "\`$generated\`" \
+        "$generated is not reported as deferred"
+done
+assert_absent "$COMPOSITION_SECTION" "\`C7900_PROCESS_TEMP_MAX\`" \
+    "deferred process inputs are kept out of the gas-composition section"
+
+assert_contains "$RUN_SERVOMEX/conversion-report.md" "WARNING: C7900-process-application-inputs" \
+    "the deferred process inputs are reported as unresolved"
+assert_contains "$WORK_DIR/run-servomex.log" "WARNING: C7900-process-application-inputs" \
+    "the deferred process inputs warn on stdout"
 
 echo ""
 echo "========================================="

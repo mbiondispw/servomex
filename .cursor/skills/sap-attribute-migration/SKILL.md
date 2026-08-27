@@ -38,9 +38,11 @@ SAP PDF  ──extract──▶  manifest.yaml  ──human approval──▶  g
    `AttributePicklistValue.Abbreviation`.
 6. **Single permitted value ⇒ required, read-only, defaulted.** Multi-value
    characteristics stay optional and editable with no invented default.
-7. **Missing dependency logic is a warning, never a constraint.** Record it
+7. **Characteristics that repeat one option set share a picklist.** Declare it
+   once under `picklists:` and point each characteristic at it with `picklist:`.
+8. **Missing dependency logic is a warning, never a constraint.** Record it
    under `unresolved:` in the manifest.
-8. **The Product is resolved, never created.** `Product2` is `Update`-only,
+9. **The Product is resolved, never created.** `Product2` is `Update`-only,
    scoped to the SKU, writing only `BasedOn.Code`.
 
 ## DO NOT
@@ -128,6 +130,8 @@ The generator refuses to emit a plan when:
 | A retained characteristic has no `category`, or its category is not `generated` | Retain the section header as a category |
 | A `Picklist` characteristic has no retained values | Retain a value, or mark the characteristic `deferred` |
 | A non-`Picklist` characteristic declares values | Set `type: Picklist`, or drop the values |
+| A characteristic references an unknown or non-generated shared picklist | Declare the picklist under `picklists:` |
+| A characteristic declares both `picklist:` and inline `values:` | Keep one option set |
 | Two nodes collapse onto one generated code | Disambiguate the source ids or value codes |
 | A minted identity is still a bare SAP code such as `A` or `1` | Give the source node a longer, source-specific id |
 | The record chain has a broken link, or a single-value attribute is not required, read-only, and defaulted | Report it — the generator should never produce this |
@@ -166,6 +170,16 @@ target:
   product_classification_name: <display name>
 plan:
   path: datasets/sfdmu/<brand>/<locale>/<plan>
+picklists:                     # optional: option sets shared by several characteristics
+  - id: <shared picklist id>
+    label: <display name>
+    disposition: generated
+    source: { page: <n>, text: "<exact source line>" }
+    values:
+      - code: <raw SAP option code>
+        label: <display value>
+        disposition: generated
+        source: { page: <n>, text: "<exact source line>" }
 categories:
   - id: <SAP section-header characteristic id>
     label: <display name>
@@ -177,6 +191,7 @@ characteristics:
     disposition: generated       # or excluded | deferred | superseded | source-control
     disposition_reason: <why>
     type: Picklist               # Picklist | Text | Number | Checkbox | Date | DateTime
+    picklist: <shared picklist id>   # instead of inline values
     category: <category id>
     sequence: <n>
     source: { page: <n>, text: "<exact source line>" }

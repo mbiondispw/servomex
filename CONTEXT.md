@@ -40,3 +40,33 @@ configurator attributes. Owning skill:
 | **Disposition** | The recorded decision for a source node: `generated`, `excluded`, `deferred`, `superseded`, or `source-control`. |
 | **Source-qualified code** | A generated Revenue Cloud code namespaced by source system, class, characteristic, and value, so repeated raw SAP codes cannot collide globally. |
 | **Conversion report** | The generated Markdown record of dispositions, generated counts, exclusions, and unresolved source logic. |
+
+## SAP Configuration Rules
+
+Terms for the dependency logic that governs which SAP Characteristics and
+Permitted Values a configuration may use, and its Revenue Cloud equivalent.
+
+### Source-side terms (SAP)
+
+| Term | Definition |
+|------|------------|
+| **Precondition** | A SAP rule, prefixed `PC_`, that suppresses its subject unless the rule holds. The subject is never offered while the condition is false. |
+| **Selection Condition** | A SAP rule, prefixed `SC_`, that makes its subject relevant — and so answerable — when the rule holds. Independent of, and combinable with, a Precondition on the same subject. |
+| **Rule Attachment** | The binding of a rule to its subject. A rule attaches either to a whole SAP Characteristic or to one Permitted Value within it; the two are different subjects with different effects. |
+| **Rule Conjunction** | Several rules attached to one subject. All must hold for the subject to be offered; they are never alternatives. |
+| **Release Gate** | A rule whose condition tests SAP release status rather than the configuration. It records whether a feature is sellable yet, not whether it fits the rest of the configuration. |
+
+### Translation terms
+
+| Term | Definition |
+|------|------------|
+| **Rule Reduction** | Rewriting a rule's condition against the Permitted Values actually retained, since a rule cannot name a value that no longer exists. A reduction may leave the condition unconditionally true or unconditionally false. |
+| **Unreachable Value** | A Permitted Value that survives into an Attribute Picklist but that no configuration can select, because a reduced rule rules it out in every case. Retained rather than deleted, so the picklist stays faithful to its source. |
+
+### Target-side terms (Revenue Cloud)
+
+| Term | Definition |
+|------|------------|
+| **Constraint Model** | The declarative model, authored in Constraint Modeling Language (CML), that the Product Configurator solves to decide which values a configuration may hold. |
+| **Domain** | The set of values an attribute may currently hold. Narrower than its Attribute Picklist whenever the Constraint Model rules values out. |
+| **Domain Pruning** | Recomputing an attribute's Domain from the Constraint Model as the configuration changes, so ruled-out values stop being offered. Opt-in per attribute. |

@@ -1098,7 +1098,15 @@ def main(argv=None):
 
     write_text(
         output_dir / "export.json",
-        render_json({"objects": export_objects(sku), "apiVersion": API_VERSION}),
+        render_json(
+            {
+                "objects": export_objects(sku),
+                "apiVersion": API_VERSION,
+                # Without this, SFDMU cannot resolve Parent.ExternalId columns in
+                # Id-less CSVs and silently writes every lookup as null.
+                "excludeIdsFromCSVFiles": "true",
+            }
+        ),
     )
     for object_name in OBJECT_ORDER:
         write_text(

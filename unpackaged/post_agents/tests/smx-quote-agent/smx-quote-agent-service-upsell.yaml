@@ -1,0 +1,40 @@
+# Description: Agentforce Testing Center spec for the Servomex Quote Agent
+# (SMX_Revenue_Quote_Management), Service Upsell cases (#56, spec #54).
+# Same format as rlm-base-dev's unpackaged/post_agents/tests/quoting-assistant.
+#
+# Run with rlm-base-dev's test_agents task (see unpackaged/post_agents/README.md):
+#   cci task run test_agents --org servomex -o tests_path <abs path to this folder>
+#
+# Fixtures (scripts/apex/smxServiceUpsellFixture.apex, run first):
+#   Account  Service Upsell Test Customer          GBP
+#   Opp      Service Upsell Existing Opportunity   Proposal/Quote, Standard Price Book
+# Products (loaded by #55, servomex-services plan):
+#   SMX-SVC-TRN-DAY  Operator Training — per Service Day            GBP 1,606.80
+#   SMX-SVC-SAT      Site Acceptance Test (SAT) — per Service Day   GBP 1,606.80
+#
+# Each case writes records: after a run, check them with
+# scripts/soql/smxServiceUpsellQuote.soql, then run
+# scripts/apex/smxServiceUpsellCleanup.apex.
+#
+# conversationHistory pre-positions the agent in QuoteManagement, because Agent
+# Script spends the first reasoning cycle on the router transition.
+# expectedActions uses the action DEFINITION names from the .agent file; the
+# planner may call extra lookups (IdentifyRecordByName, GetProdtSellModelForPrdct).
+name: "Servomex Quote Agent — Service Upsell"
+subjectType: AGENT
+subjectName: SMX_Revenue_Quote_Management
+
+testCases:
+  # --- QuoteManagement → quote an existing opportunity (no new opportunity) ---
+  - utterance: "Quote the Service Upsell Existing Opportunity with 2 operator training days and 1 SAT day"
+    expectedTopic: QuoteManagement
+    expectedActions:
+      - CreateInitialQuote
+      - AddQuoteLineItemToQuote
+    expectedOutcome: "Agent creates a quote on the Service Upsell Existing Opportunity and adds 2 x Operator Training — per Service Day and 1 x Site Acceptance Test (SAT) — per Service Day, each at £1,606.80, for a quote total of £4,820.40. It names the products and links the quote, without printing raw IDs or JSON."
+    conversationHistory:
+      - role: user
+        message: "I want to quote some services for Service Upsell Test Customer"
+      - role: agent
+        topic: QuoteManagement
+        message: "Which opportunity should I quote, and which services and quantities do you need?"

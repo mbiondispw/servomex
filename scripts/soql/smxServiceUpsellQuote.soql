@@ -1,0 +1,1 @@
+SELECT Quote.Name, Quote.Opportunity.Name, Quote.CurrencyIsoCode, Quote.TotalPrice, Product2.StockKeepingUnit, Quantity, UnitPrice, TotalPrice, PricebookEntry.CurrencyIsoCode, PricebookEntry.UnitPrice FROM QuoteLineItem WHERE Quote.Account.Name = 'Service Upsell Test Customer' ORDER BY Quote.CreatedDate DESC, Product2.StockKeepingUnit

@@ -23,3 +23,24 @@ tasks:
     run_tests:
         options:
             required_org_code_coverage_percent: 75
+
+    deploy_servomex:
+        group: Servomex
+        description: Deploy this repo's source directory (force-app), which holds the Demo Inbox Address module.
+        class_path: cumulusci.tasks.salesforce.Deploy
+        options:
+            path: force-app
+
+    rewrite_contact_emails_to_demo_inbox:
+        group: Servomex
+        description: >
+            Give every Contact in the org a unique Demo Inbox Address
+            (martin.biondi+<alias>@piercewashington.com), so no Proposal reaches a real
+            customer, and report how many Contacts changed and were skipped. The alias is
+            the email's local part, or firstname.lastname when another Contact shares it or
+            the email is blank, with 2, 3, ... appended on a clash. Re-runnable: Contacts
+            that already hold a Demo Inbox Address are skipped. Requires deploy_servomex.
+            See scripts/apex/rewriteContactEmailsToDemoInbox.apex.
+        class_path: tasks.rlm_apex_file.FileBasedAnonymousApexTask
+        options:
+            path: scripts/apex/rewriteContactEmailsToDemoInbox.apex

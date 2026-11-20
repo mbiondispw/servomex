@@ -24,6 +24,13 @@ Your DX project follows this structure:
 
 See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
 
+## Servomex Demo Tasks
+
+- `cci task run deploy_servomex --org servomex`: deploy `force-app`, including the `DemoInboxAddress` Apex module.
+- `cci task run rewrite_contact_emails_to_demo_inbox --org servomex`: give every Contact a unique Demo Inbox Address (`martin.biondi+<alias>@piercewashington.com`, see [GLOSSARY.md](GLOSSARY.md)) so no Proposal reaches a real customer. Re-runnable; it prints how many Contacts changed and were skipped. Run it after every org refresh or Contact data load.
+
+CumulusCI needs a `.git` directory, so run these from a regular clone, not a `git worktree`.
+
 ## Get Started
 
 Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.

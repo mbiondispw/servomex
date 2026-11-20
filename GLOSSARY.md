@@ -71,3 +71,15 @@ Permitted Values a configuration may use, and its Revenue Cloud equivalent.
 | **Constraint Model** | The declarative model, authored in Constraint Modeling Language (CML), that the Product Configurator solves to decide which values a configuration may hold. |
 | **Domain** | The set of values an attribute may currently hold. Narrower than its Attribute Picklist whenever the Constraint Model rules values out. |
 | **Domain Pruning** | Recomputing an attribute's Domain from the Constraint Model as the configuration changes, so ruled-out values stop being offered. Opt-in per attribute. |
+
+## Quote Delivery
+
+Terms for sending a quote's customer-facing document to the customer.
+
+| Term | Definition |
+|------|------------|
+| **Quote Account** | The customer Account a Quote is for. Distinct from the seller's Account, which supplies the seller details on a document. |
+| **Quote Contact** | The one Contact on the Quote Account who receives the quote. Every Quote that will be sent has one; it is never inferred from the Account's other Contacts. _Avoid_: account contact, primary contact. |
+| **Proposal** | The customer-facing PDF generated from a Quote and sent to its Quote Contact. Each send produces a new Proposal. _Avoid_: quote document, quote PDF. |
+| **Presented** | The Quote Status meaning a Proposal has been sent to the Quote Contact. Set only by a successful send. |
+| **Demo Inbox Address** | An email address of the form `martin.biondi+<alias>@piercewashington.com`. The only kind of address a Contact in a demo org may hold, so no Proposal reaches a real customer. _Avoid_: plus-address, redirect address. |

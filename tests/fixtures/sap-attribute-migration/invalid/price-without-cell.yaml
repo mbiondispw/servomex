@@ -1,0 +1,115 @@
+# Rejection fixture: an Option Adder price with no cell. Otherwise the approved
+# minimal Workbook Source conversion (Mini MP
+# Configuration only, plus the list price and one Option Adder). Kept independent of datasets/sap/
+# so that curation work on the real manifest does not move the test's
+# expectations. No sap_class: the workbook is not a SAP classification.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-11-20
+
+source:
+  kind: workbook
+  system: SMX
+  document: 5230A1 Product configuration and pricing.xlsx
+  sap_product: 05230A1
+
+target:
+  product_sku: 05230A1
+  product_classification_name: SERVOFLEX Mini MP Portable Analyser
+  list_price:
+    amount: 4500
+    currency: GBP
+    pricebook: Standard Price Book
+    selling_model: One-Time
+    source:
+      sheet: Product Config and Pricing
+      cell: F2
+      text: "4500"
+  option_adders:
+    schedule: Standard Attribute Based Adjustment
+    selling_model: One-Time
+    currency: GBP
+    effective_from: "2026-01-01T00:00:00.000+0000"
+    price_impacting: [SIDE_PANEL]
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
+  prerequisites:
+    - Run the one-time product bootstrap first.
+
+categories:
+  - id: OPTIONS
+    label: Mini MP Options
+    disposition: generated
+    disposition_reason: The workbook has no section headers; one category holds every option.
+    source:
+      sheet: Product Config and Pricing
+      cell: A2
+      text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser"
+
+characteristics:
+  - id: CONFIGURATION
+    label: Mini MP Configuration
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 1
+    default_value: User Configured
+    source:
+      sheet: Product Config and Pricing
+      cell: A4
+      text: "Mini MP Configuration"
+    values:
+      - code: A
+        label: User Configured
+        source:
+          sheet: Product Config and Pricing
+          cell: C4:D4
+          text: "A | User Configured"
+      - code: B
+        label: Standard Variant (SV01)
+        source:
+          sheet: Product Config and Pricing
+          cell: C5:D5
+          text: "B | Standard Variant (SV01)"
+
+  - id: SIDE_PANEL
+    label: Side Panel Accessories
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 2
+    default_value: None
+    source:
+      sheet: Product Config and Pricing
+      cell: A52
+      text: "Side Panel Accessories"
+    values:
+      - code: "0"
+        label: None
+        disposition: added
+        disposition_reason: The workbook offers no explicit "no side panel" choice.
+      - code: "3"
+        label: Flow Meter
+        source:
+          sheet: Product Config and Pricing
+          cell: C54:D54
+          text: "3 | Flow Meter"
+        price:
+          amount: 947
+          source:
+            sheet: Product Config and Pricing
+            text: "947"
+
+  - id: SERIAL_NUMBER
+    label: Serial Number
+    disposition: excluded
+    disposition_reason: Not a selling choice.
+    source:
+      sheet: Product Config and Pricing
+      cell: A99
+      text: "Serial Number"

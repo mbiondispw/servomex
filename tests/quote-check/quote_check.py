@@ -135,10 +135,23 @@ def resolve_line(org, line, pricebook_id, currency):
 
     overrides = []
     for code, value in (line.get("attributes") or {}).items():
-        definitions = query(org, f"SELECT Id FROM AttributeDefinition WHERE Code = {soql_literal(code)}")
+        definitions = query(
+            org, f"SELECT Id, PicklistId FROM AttributeDefinition WHERE Code = {soql_literal(code)}"
+        )
         if len(definitions) != 1:
             raise CheckError(f"no Attribute Definition with Code {code}")
-        overrides.append((definitions[0]["Id"], value))
+        picklist_value_id = None
+        if definitions[0]["PicklistId"]:
+            # Place rejects a picklist override that names only its text value.
+            picklist_values = query(
+                org,
+                "SELECT Id FROM AttributePicklistValue "
+                f"WHERE PicklistId = '{definitions[0]['PicklistId']}' AND Value = {soql_literal(value)}",
+            )
+            if len(picklist_values) != 1:
+                raise CheckError(f"{code} has no permitted value {value!r}")
+            picklist_value_id = picklist_values[0]["Id"]
+        overrides.append((definitions[0]["Id"], value, picklist_value_id))
     return product_id, entries[0], overrides
 
 
@@ -174,16 +187,16 @@ def place_quote(org, scenario, account_id, currency):
                 "Quantity": line.get("quantity", 1),
             },
         })
-        for attr_index, (definition_id, value) in enumerate(overrides):
-            records.append({
-                "referenceId": f"{line_ref}Attr{attr_index}",
-                "record": {
-                    "attributes": {"type": "QuoteLineItemAttribute", "method": "POST"},
-                    "QuoteLineItemId": f"@{{{line_ref}.id}}",
-                    "AttributeDefinitionId": definition_id,
-                    "AttributeValue": value,
-                },
-            })
+        for attr_index, (definition_id, value, picklist_value_id) in enumerate(overrides):
+            record = {
+                "attributes": {"type": "QuoteLineItemAttribute", "method": "POST"},
+                "QuoteLineItemId": f"@{{{line_ref}.id}}",
+                "AttributeDefinitionId": definition_id,
+                "AttributeValue": value,
+            }
+            if picklist_value_id:
+                record["AttributePicklistValueId"] = picklist_value_id
+            records.append({"referenceId": f"{line_ref}Attr{attr_index}", "record": record})
 
     # Configure the way the quote UI does: apply product defaults, then run the
     # configuration rules, so the check sees what a rep would see.

@@ -55,3 +55,43 @@ scenarios:
             SMX-05230A1-SIDE_PANEL_ACCESSORIES: None
             SMX-05230A1-SAMPLE_PROBE: Not Supplied
 
+
+  - name: battery-and-printer-add-their-option-adders
+    description: >-
+      Option Adders (#35): Rechargeable Battery UK (1292) and Printer Supplied
+      (1521) on the 4500 base.
+    account: direct
+    lines:
+      - sku: 05230A1
+        attributes:
+          SMX-05230A1-SUPPLY_POWER: Rechargeable Battery UK
+          SMX-05230A1-PRINTER: Supplied
+    expect:
+      lines:
+        - sku: 05230A1
+          fields:
+            TotalPrice: 7313
+          attributes:
+            SMX-05230A1-SUPPLY_POWER: Rechargeable Battery UK
+            SMX-05230A1-PRINTER: Supplied
+
+  - name: high-accuracy-dual-measurement-adds-its-option-adders
+    description: >-
+      Option Adders (#35): Oxygen High Accuracy (7534), Measurement 2 CO2 50% FS
+      (4750) and 1/8" NPT inlet (99) on the 4500 base.
+    account: direct
+    lines:
+      - sku: 05230A1
+        attributes:
+          SMX-05230A1-MEASUREMENT_1: Oxygen, High Accuracy
+          SMX-05230A1-MEASUREMENT_2: CO2 50% FS
+          SMX-05230A1-INLET_COUPLER: 1/8" NPT
+    expect:
+      lines:
+        - sku: 05230A1
+          fields:
+            TotalPrice: 16883
+          attributes:
+            SMX-05230A1-MEASUREMENT_1: Oxygen, High Accuracy
+            SMX-05230A1-MEASUREMENT_2: CO2 50% FS
+            SMX-05230A1-INLET_COUPLER: 1/8" NPT

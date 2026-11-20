@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Option Adder matrix: one flat price adjustment per product, attribute and picklist value, read by the Option_Adder_Matrix decision table. Rows are generated from the approved attribute manifest; do not edit them by hand.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>false</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Option Adder</label>
+    <nameField>
+        <label>Option Adder Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Option Adders</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

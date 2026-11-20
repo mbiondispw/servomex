@@ -1,0 +1,26 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Id, StockKeepingUnit FROM Product2 WHERE StockKeepingUnit = '05230A1' ORDER BY StockKeepingUnit ASC",
+      "operation": "Readonly",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT Code, Id FROM AttributeDefinition WHERE Code LIKE 'SMX-05230A1-%' ORDER BY Code ASC",
+      "operation": "Readonly",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, Id FROM AttributePicklistValue WHERE Code LIKE 'SMX-05230A1-%' ORDER BY Code ASC",
+      "operation": "Readonly",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Adjustment_Type__c, Adjustment_Value__c, Attribute_Definition__c, Attribute_Picklist_Value__c, Code__c, CurrencyIsoCode, Id, Is_Active__c, Name, Product__c, Source_Reference__c FROM Option_Adder__c WHERE Product__r.StockKeepingUnit = '05230A1' ORDER BY Code__c ASC",
+      "operation": "Upsert",
+      "externalId": "Code__c"
+    }
+  ],
+  "apiVersion": "66.0",
+  "excludeIdsFromCSVFiles": "true"
+}

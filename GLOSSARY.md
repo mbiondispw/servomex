@@ -83,3 +83,16 @@ Terms for sending a quote's customer-facing document to the customer.
 | **Proposal** | The customer-facing PDF generated from a Quote and sent to its Quote Contact. Each send produces a new Proposal. _Avoid_: quote document, quote PDF. |
 | **Presented** | The Quote Status meaning a Proposal has been sent to the Quote Contact. Set only by a successful send. |
 | **Demo Inbox Address** | An email address of the form `martin.biondi+<alias>@piercewashington.com`. The only kind of address a Contact in a demo org may hold, so no Proposal reaches a real customer. _Avoid_: plus-address, redirect address. |
+
+## Service Upsell Quoting
+
+Terms for quoting Servomex services to a customer who already owns an
+analyser.
+
+| Term | Definition |
+|------|------------|
+| **Service Upsell** | A services-only quote, on its own opportunity, for a Quote Account that already owns a Servomex analyser. Services sold with a new analyser are not an upsell. |
+| **Service Day** | One Servomex engineer or trainer working on site for one day. The unit in which Training and SAT are sold. |
+| **Training** | On-site instruction of the customer's operators in analyser operation, maintenance, and troubleshooting, sold in Service Days. |
+| **Site Acceptance Test (SAT)** | On-site test, run with the customer after delivery, proving the installed analyser performs to specification. Sold in Service Days. _Avoid_: UAT. |
+| **Factory Acceptance Test (FAT)** | Test at Servomex, before shipment, proving the analyser or system meets specification. Distinct from SAT, and not part of a Service Upsell. |

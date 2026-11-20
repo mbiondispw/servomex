@@ -277,6 +277,29 @@ reliably upsert on external ids composed only of relationship traversals
 (see SFDMU Bug 5 in `AGENTS.md`). `AttributeCategoryAttribute` has no direct
 identity field, so it is the single object matched by traversal.
 
+## Option Adder Matrix
+
+A second generator turns the same approved manifest's `price` entries into a
+stacking alternative to attribute-based adjustments (#46). It writes one
+`Option_Adder__c` row per priced retained value, keyed by product, picklist value
+and currency, into `<plan.path>-option-adder-matrix`. The `Option_Adder_Matrix`
+decision table reads those rows. It is **not wired** into pricing.
+
+```bash
+python scripts/ai/generate_option_adder_matrix.py \
+    --manifest datasets/sap/servomex-05230a1/manifest.yaml
+tests/test-option-adder-matrix.sh
+```
+
+Always regenerate over the committed plan directory: a value whose price was
+removed keeps its row with `Is_Active__c = false`, which is how the Upsert-only
+plan retires it.
+
+It reuses this generator's validation, so it rejects the same manifests. Its
+metadata (object, decision table, permission set) lives in
+`unpackaged/post_option_adder_matrix/`. The element design, the verification spike
+and the wiring checklist are in `docs/features/option-adder-price-adjustment-matrix.md`.
+
 ## Related
 
 - `.cursor/skills/sfdmu-data-plans/SKILL.md` — SFDMU v5 rules and known bugs

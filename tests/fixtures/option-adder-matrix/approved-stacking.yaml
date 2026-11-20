@@ -1,0 +1,156 @@
+# Positive fixture for the Option Adder matrix generator. Kept independent of
+# datasets/sap/ so curation of the real manifest does not move expectations.
+#
+# Shapes it pins down:
+# - PRINTER is price-impacting; TRANSPORT_CASE is not. The matrix prices both.
+# - Both attributes have a priced value labelled "Supplied", so a row must be
+#   keyed by its picklist value, not its label.
+# - SIDE_PANEL has two priced values and an added, unpriced None.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-11-20
+
+source:
+  kind: workbook
+  system: SMX
+  document: 5230A1 Product configuration and pricing.xlsx
+  sap_product: 05230A1
+
+target:
+  product_sku: 05230A1
+  product_classification_name: SERVOFLEX Mini MP Portable Analyser
+  option_adders:
+    schedule: Standard Attribute Based Adjustment
+    selling_model: One-Time
+    currency: GBP
+    effective_from: "2026-01-01T00:00:00.000+0000"
+    price_impacting: [PRINTER]
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
+  prerequisites:
+    - Run the one-time product bootstrap first.
+
+categories:
+  - id: OPTIONS
+    label: Mini MP Options
+    disposition: generated
+    source:
+      sheet: Product Config and Pricing
+      cell: A2
+      text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser"
+
+characteristics:
+  - id: PRINTER
+    label: Printer
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 1
+    default_value: Not Supplied
+    source:
+      sheet: Product Config and Pricing
+      cell: A40
+      text: "Printer"
+    values:
+      - code: "0"
+        label: Not Supplied
+        source:
+          sheet: Product Config and Pricing
+          cell: C40:D40
+          text: "0 | Not Supplied"
+      - code: "1"
+        label: Supplied
+        source:
+          sheet: Product Config and Pricing
+          cell: C41:D41
+          text: "1 | Supplied"
+        price:
+          amount: 1521
+          source:
+            sheet: Product Config and Pricing
+            cell: F41
+            text: "1521"
+
+  - id: SIDE_PANEL
+    label: Side Panel Accessories
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 2
+    source:
+      sheet: Product Config and Pricing
+      cell: A52
+      text: "Side Panel Accessories"
+    values:
+      - code: "0"
+        label: None
+        disposition: added
+        disposition_reason: The workbook offers no explicit "no side panel" choice.
+      - code: "2"
+        label: Flow Meter + Valve
+        source:
+          sheet: Product Config and Pricing
+          cell: C53:D53
+          text: "2 | Flow Meter + Valve"
+        price:
+          amount: 1054
+          source:
+            sheet: Product Config and Pricing
+            cell: F53
+            text: "1054"
+      - code: "3"
+        label: Flow Meter
+        source:
+          sheet: Product Config and Pricing
+          cell: C54:D54
+          text: "3 | Flow Meter"
+        price:
+          amount: 947.5
+          source:
+            sheet: Product Config and Pricing
+            cell: F54
+            text: "947.50"
+
+  - id: TRANSPORT_CASE
+    label: Transport Case
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 3
+    source:
+      sheet: Product Config and Pricing
+      cell: A70
+      text: "Transport Case"
+    values:
+      - code: "0"
+        label: Not Supplied
+        source:
+          sheet: Product Config and Pricing
+          cell: C70:D70
+          text: "0 | Not Supplied"
+      - code: "1"
+        label: Supplied
+        source:
+          sheet: Product Config and Pricing
+          cell: C71:D71
+          text: "1 | Supplied"
+        price:
+          amount: 806
+          source:
+            sheet: Product Config and Pricing
+            cell: F71
+            text: "806"
+
+  - id: SERIAL_NUMBER
+    label: Serial Number
+    disposition: excluded
+    disposition_reason: Not a selling choice.
+    source:
+      sheet: Product Config and Pricing
+      cell: A99
+      text: "Serial Number"

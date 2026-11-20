@@ -145,6 +145,7 @@ cci task run validate_setup                                          # no org ne
 python scripts/validate_sfdmu_v5_datasets.py
 python scripts/ai/generate_cci_reference.py                         # after cumulusci.yml edits
 tests/test-sap-attribute-migration.sh                               # SAP attribute generator
+tests/test-option-adder-matrix.sh                                   # Option Adder matrix generator
 python tests/quote-check/quote_check.py --org servomex             # org quote check (sf alias; writes test quotes)
 ```
 
@@ -266,6 +267,7 @@ python scripts/ai/query_erd.py describe Product2           # Query RLM data mode
 python scripts/ai/query_erd.py domain Pricing               # List domain objects
 python scripts/ai/generate_cci_reference.py                 # Regenerate CCI docs
 python scripts/ai/generate_sap_attribute_migration.py --manifest datasets/sap/servomex-07930b1/manifest.yaml
+python scripts/ai/generate_option_adder_matrix.py --manifest datasets/sap/servomex-05230a1/manifest.yaml
 ```
 
 ---

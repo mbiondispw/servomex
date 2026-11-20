@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Code__c</fullName>
+    <caseSensitive>true</caseSensitive>
+    <description>Stable key: picklist value code, product SKU and currency. The SFDMU plan upserts on it.</description>
+    <externalId>true</externalId>
+    <label>Code</label>
+    <length>255</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

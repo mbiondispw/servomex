@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Adjustment_Value__c</fullName>
+    <description>Price Adjustment Matrix adjustment value in the record currency. Negative, because a matrix adjustment is a discount and an Option Adder raises the price.</description>
+    <externalId>false</externalId>
+    <label>Adjustment Value</label>
+    <precision>16</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

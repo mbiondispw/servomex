@@ -40,15 +40,15 @@ resolves against a record the previous step already wrote.
 
 | # | Object | Operation | External ID | Records |
 |---|--------|-----------|-------------|---------|
-| 1 | AttributePicklist | Upsert | `Code` | 2 |
-| 2 | AttributePicklistValue | Upsert | `Code` | 11 |
-| 3 | AttributeDefinition | Upsert | `Code` | 2 |
+| 1 | AttributePicklist | Upsert | `Code` | 15 |
+| 2 | AttributePicklistValue | Upsert | `Code` | 49 |
+| 3 | AttributeDefinition | Upsert | `Code` | 15 |
 | 4 | AttributeCategory | Upsert | `Code` | 1 |
-| 5 | AttributeCategoryAttribute | Upsert | `AttributeCategory.Code;AttributeDefinition.Code` | 2 |
+| 5 | AttributeCategoryAttribute | Upsert | `AttributeCategory.Code;AttributeDefinition.Code` | 15 |
 | 6 | ProductClassification | Upsert | `Code` | 1 |
-| 7 | ProductClassificationAttr | Upsert | `Name` | 2 |
+| 7 | ProductClassificationAttr | Upsert | `Name` | 15 |
 | 8 | Product2 | Update | `StockKeepingUnit` | 1 |
-| 9 | ProductAttributeDefinition | Upsert | `Name` | 2 |
+| 9 | ProductAttributeDefinition | Upsert | `Name` | 15 |
 | 10 | PricebookEntry | Upsert | `Product2.StockKeepingUnit;Pricebook2.Name;ProductSellingModel.Name;CurrencyIsoCode` | 1 |
 
 ## Identity Strategy

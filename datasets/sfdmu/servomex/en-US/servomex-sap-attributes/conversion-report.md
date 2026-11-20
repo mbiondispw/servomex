@@ -347,6 +347,12 @@ Every node extracted from the source document appears exactly once, alongside an
 |----------------|------------|-------------|--------|
 | `C7900_APPLICATION_DETAIL` | `XX` | Null | SAP null placeholder, not a customer-facing application. Leaving Application Detail unset already expresses no selection. |
 
+## Added Permitted Values
+
+Values generated beyond the source document. Each carries its reviewer's reason.
+
+None.
+
 ## Unresolved Source Logic
 
 The source document indicates dependency and variant logic that it does not contain. No Revenue Cloud constraints were generated. Generated option combinations are **not** proven valid.

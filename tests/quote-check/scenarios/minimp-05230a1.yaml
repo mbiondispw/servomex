@@ -31,3 +31,27 @@ scenarios:
             SMX-05230A1-CONFIGURATION: User Configured
             SMX-05230A1-SUPPLY_POWER: UK Mains
 
+  - name: default-minimp-carries-every-attribute-default
+    description: >-
+      A newly configured Mini MP line carries every static attribute default
+      (#34). Sampling System, mA Output, Probe Holder and Transport Case have
+      no static default; the Constraint Model sets them.
+    account: direct
+    lines:
+      - sku: 05230A1
+    expect:
+      lines:
+        - sku: 05230A1
+          attributes:
+            SMX-05230A1-CONFIGURATION: User Configured
+            SMX-05230A1-SUPPLY_POWER: UK Mains
+            SMX-05230A1-MEASUREMENT_1: Oxygen, Standard Accuracy
+            SMX-05230A1-MEASUREMENT_2: None
+            SMX-05230A1-INLET_COUPLER: 1/4" Barb
+            SMX-05230A1-EXHAUST_VENT_OUTLET: Rear Panel
+            SMX-05230A1-USER_MANUAL: English
+            SMX-05230A1-PRINTER: Not Supplied
+            SMX-05230A1-VEHICLE_POWER_ADAPTOR: Supplied
+            SMX-05230A1-SIDE_PANEL_ACCESSORIES: None
+            SMX-05230A1-SAMPLE_PROBE: Not Supplied
+

@@ -134,7 +134,7 @@ The generator refuses to emit a plan when:
 | A `superseded` node has no `superseded_by`, or names an unknown characteristic | Point it at the retained variant |
 | A retained characteristic has no `category`, or its category is not `generated` | Retain the section header as a category |
 | A node that is not `generated` declares values | Move the values to the retained node, or drop them |
-| A permitted value is dispositioned as anything but `generated` or `excluded`, or is excluded with no reason | Use `generated`, or `excluded` with a `disposition_reason` |
+| A permitted value is dispositioned as anything but `generated`, `excluded` or `added`, or is excluded or added with no reason | Use `generated`, or `excluded`/`added` with a `disposition_reason` |
 | A `Picklist` characteristic has no retained values | Retain a value, or mark the characteristic `deferred` |
 | A non-`Picklist` characteristic declares values | Set `type: Picklist`, or drop the values |
 | A characteristic references an unknown or non-generated shared picklist | Declare the picklist under `picklists:` |
@@ -240,7 +240,7 @@ characteristics:
     values:
       - code: <raw SAP option code>
         label: <display value>
-        disposition: generated   # or excluded (+ disposition_reason)
+        disposition: generated   # or excluded | added (+ disposition_reason; added values need no source)
         source: { page: <n>, text: "<exact source line>" }
 unresolved:
   - id: <topic>

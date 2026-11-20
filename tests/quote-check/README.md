@@ -15,6 +15,13 @@ python tests/quote-check/quote_check.py --org <sf-alias> [--only <scenario-name>
   Take the shared org lock before running it against a shared org.
 - Exit `0` all scenarios passed, `1` a scenario failed or the org refused a request.
 
+## Scenario files
+
+| File | Covers |
+|------|--------|
+| `scenarios/minimp-05230a1.yaml` (default) | SERVOFLEX Mini MP 05230A1 attributes, defaults and Option Adders |
+| `scenarios/service-days.yaml` | Operator Training and SAT per Service Day at £1,606.80 (`servomex-services` plan) |
+
 ## Adding a scenario
 
 Append to `scenarios/minimp-05230a1.yaml` (or add a new file and pass

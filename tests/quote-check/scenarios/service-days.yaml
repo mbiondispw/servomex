@@ -1,0 +1,61 @@
+# Quote-check scenarios for the per-Service-Day service products (#55).
+#
+# Both products are priced at the 2021 UK site daily rate, 1606.80 GBP per
+# Service Day (margin-calculator workbook, Lookup Tables!AC32). Quantity is the
+# number of Service Days.
+# Run: python tests/quote-check/quote_check.py --org <sf-alias> \
+#        --scenarios tests/quote-check/scenarios/service-days.yaml
+
+accounts:
+  service:
+    name: Quote Check - Service Customer
+    type: Customer
+    currency: GBP
+
+scenarios:
+  - name: one-training-day-quotes-at-service-day-rate
+    description: One Operator Training Service Day quotes at the 1606.80 GBP day rate.
+    account: service
+    lines:
+      - sku: SMX-SVC-TRN-DAY
+    expect:
+      lines:
+        - sku: SMX-SVC-TRN-DAY
+          fields:
+            ListPrice: 1606.80
+            TotalPrice: 1606.80
+
+  - name: one-sat-day-quotes-at-service-day-rate
+    description: One SAT Service Day quotes at the 1606.80 GBP day rate.
+    account: service
+    lines:
+      - sku: SMX-SVC-SAT
+    expect:
+      lines:
+        - sku: SMX-SVC-SAT
+          fields:
+            ListPrice: 1606.80
+            TotalPrice: 1606.80
+
+  - name: two-training-days-and-one-sat-day
+    description: >-
+      The demo's services quote: 2 Operator Training Service Days total 3213.60
+      and 1 SAT Service Day totals 1606.80, 4820.40 GBP for the quote.
+    account: service
+    lines:
+      - sku: SMX-SVC-TRN-DAY
+        quantity: 2
+      - sku: SMX-SVC-SAT
+        quantity: 1
+    expect:
+      lines:
+        - sku: SMX-SVC-TRN-DAY
+          fields:
+            Quantity: 2
+            ListPrice: 1606.80
+            TotalPrice: 3213.60
+        - sku: SMX-SVC-SAT
+          fields:
+            Quantity: 1
+            ListPrice: 1606.80
+            TotalPrice: 1606.80

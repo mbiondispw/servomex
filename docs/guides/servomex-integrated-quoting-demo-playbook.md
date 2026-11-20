@@ -15,7 +15,7 @@ showcase.
 | **Demo analyser** | 4 × SERVOFLEX **MiniMP 5200**, user-configured, replacing the deal's 4 × `02700D1`. Options come from the [public product page](https://www.servomex.com/gas-analyzers/finder/minimp-5200/). **Prices are illustrative** (§7.1) |
 | **Template version** | Rev 9 (2021-01-15) |
 | **Audience** | Servomex Sales, Inside Sales/CSR, Systems/Proposals, Service, Finance/Project Controls |
-| **Target length** | About 50 minutes for the core flow, plus 10 minutes of optional acts |
+| **Target length** | About 50 minutes for the core flow, plus 15 minutes of optional acts |
 
 ---
 
@@ -277,6 +277,7 @@ steps. Personas are Servomex's own roles.
 | 7. Proposal | 3 min | CSR | 11 | Customer-ready PDF from the approved version |
 | 8. PO change → Order | 5 min | CSR / Finance | 12, 13, 14, 16 | Revise and re-price; approvals re-evaluate on live data; then order |
 | 9. *(optional)* Billing and installed base | 10 min | Finance / Service | Cash Flow, Install Base Rev | Milestone billing and an assets-based service pipeline |
+| 10. *(optional)* Service upsell with the Quote Agent | 5 min | Service / Inside Sales | Service tab | One sentence to a priced Service Upsell quote: the agent creates the opportunity, the quote and the Service Day lines |
 
 ### Act 0 — "How it works today" (3 min)
 
@@ -433,6 +434,94 @@ steps. Personas are Servomex's own roles.
 - Installed base: assets created from the order, with a service-contract
   opportunity seeded from them. This replaces the guessed £89K "Service
   Contract/year" in *Install Base Rev*.
+
+### Act 10 — *(optional)* Service upsell with the Quote Agent (5 min)
+
+A **Service Upsell** for **Lonza Biologics UK Ltd**, a customer that already
+owns Servomex analysers. The rep quotes **Training** and a **Site Acceptance
+Test (SAT)** by the **Service Day** in one sentence to the **Servomex Quote
+Agent**. The act stands alone: it doesn't need Acts 1–9.
+
+**One-time setup** (before rehearsal; take the shared org lock for each step):
+
+1. Load the `servomex-services` data plan from rlm-base-dev. It adds
+   *Operator Training — per Service Day* (`SMX-SVC-TRN-DAY`) and *Site
+   Acceptance Test (SAT) — per Service Day* (`SMX-SVC-SAT`), each at
+   **£1,606.80** per Service Day in GBP:
+   `cci task run load_sfdmu_data --org servomex -o pathtoexportjson <servomex repo>/TBD(#58): servomex-services export.json path from #55`.
+2. Rebuild the product catalog search index, so the agent can find both
+   products: `TBD(#58): index rebuild step from the servomex-services README (#55)`.
+3. Deploy, publish and activate the Servomex Quote Agent
+   (`SMX_Revenue_Quote_Management`) with rlm-base-dev's `deploy_agents`,
+   `publish_agents` and `activate_agents`: `TBD(#58): exact commands and options from #56/#57`.
+4. Assign `SMX_QuotingAgent` to every user who holds `RLM_QuotingAgent`
+   (`TBD(#58): command from #56`). Then, **only once the agent has passed its
+   agent test (#57)**, remove `RLM_QuotingAgent` from the presenter, so their
+   agent panel offers only the Servomex Quote Agent. The script changes no
+   other user, and refuses to run unless the presenter holds
+   `SMX_QuotingAgent`:
+   `sf apex run --file scripts/apex/removePresenterTemplateQuotingAgent.apex --target-org <sf-alias>`.
+5. Set Lonza's account currency to GBP, so a new opportunity for it quotes
+   in GBP. The script is re-runnable, and Lonza's existing USD opportunities
+   keep their currency:
+   `sf apex run --file scripts/apex/setLonzaAccountCurrencyToGbp.apex --target-org <sf-alias>`.
+
+**Run the act:**
+
+1. Open the **Lonza Biologics UK Ltd** account as the presenter. Open the
+   agent panel and pick `TBD(#58): agent label as shown in the panel`. Don't
+   start from one of Lonza's opportunities: on an opportunity page, the
+   agent quotes that opportunity instead of creating one.
+2. Type:
+
+   > Create a services quote for Lonza Biologics UK Ltd in GBP with 2 operator training days and 1 SAT day.
+
+3. The agent proposes a new opportunity and asks for one confirmation. Check
+   the proposal against the defaults:
+
+   | Field | Expected |
+   |-------|----------|
+   | Name | Lonza Biologics UK Ltd — Services — ‹today, YYYY-MM-DD› |
+   | Stage | Proposal/Quote |
+   | Close date | Today + 30 days |
+   | Currency | GBP |
+   | Price book | Standard Price Book |
+
+   `TBD(#58): the agent's confirmation wording from #57`.
+4. Confirm:
+
+   > Yes, create it.
+
+5. The agent creates the opportunity (Next Step *Send services quote*) and
+   its quote, adds the lines, and replies with the lines, the total and
+   links to both records:
+
+   | Line | Service Days | Unit price | Line total |
+   |------|-------------:|-----------:|-----------:|
+   | Operator Training — per Service Day (`SMX-SVC-TRN-DAY`) | 2 | £1,606.80 | £3,213.60 |
+   | Site Acceptance Test (SAT) — per Service Day (`SMX-SVC-SAT`) | 1 | £1,606.80 | £1,606.80 |
+   | **Total** | | | **£4,820.40** |
+
+6. Open the quote from the link and show the same two lines and total.
+
+**If it goes wrong:**
+
+- A line priced in USD, or no price, means the quote isn't in GBP. Check
+  Lonza's currency (setup step 5).
+- If the agent lists several products for "training", pick *Operator
+  Training — per Service Day*. The 2-day package `SMX-SVC-TRN` is a
+  different product.
+- Don't name one of Lonza's existing opportunities. They are USD, and the
+  service products have GBP prices only.
+- Every rehearsal adds a new Lonza opportunity. That's by design: each
+  Service Upsell is its own deal.
+
+**Talk track:** In the workbook, Service is one more tab of day rates by
+region, re-keyed into every quote. Here the Service Day rate is a catalog
+price, and the agent builds the whole quote, opportunity included, from one
+sentence. The same motion applies to LyondellBasell: once its order is
+activated and the MiniMP analysers are its installed base (Act 9), the rep
+quotes their Training and SAT the same way.
 
 ---
 

@@ -1,0 +1,112 @@
+// MiniMP5200 -- configuration rules for the SERVOFLEX Mini MP Portable Analyser
+// (SAP material 05230A1). Hand-authored from the workbook
+// "5230A1 Product configuration and pricing.xlsx" (spec #32, ticket #36).
+//
+// Attribute names are AttributeDefinition.DeveloperName and domain values are
+// AttributePicklistValue.Value, both generated from the approved 05230A1 Manifest
+// (datasets/sap/servomex-05230a1/manifest.yaml).
+//
+// KNOWN LIMITATION: the engine splits a comma-separated value, so a constraint
+// comparing against a comma-bearing value ("Oxygen, ...") never matches. The
+// Oxygen rules below are therefore inert until the Measurement 1 values are
+// comma-free (follow-up issue); every other rule is enforced. Attributes with no rule
+// (Supply Power, Inlet Coupler, Exhaust / Vent Outlet, User Manual, Printer,
+// 12/24V Vehicle Power Adaptor) are left to their PCM defaults.
+//
+// Domain Pruning: every ruled attribute except the Mini MP Configuration has
+// domainComputation, so ruled-out values are not offered. The Configuration
+// keeps a fixed domain so a rep can always switch Standard Variant.
+//
+// peelable lets the engine re-derive a defaulted or derived value when another
+// choice changes. Measurement 1 and 2 are not peelable, so the same CO2 range
+// twice surfaces its message instead of being silently corrected.
+
+type LineItem;
+
+type MiniMP5200 : LineItem {
+
+    // A User Configured | B SV01 | C SV02 | D SV03 | E SV04
+    @(sequence = 1)
+    string SMX_05230A1_CONFIGURATION = ["User Configured", "Standard Variant (SV01)", "Standard Variant (SV02)", "Standard Variant (SV03)", "Standard Variant (SV04)"];
+
+    // 1 | 1A | 2 | 3 | 4 | 5 | 6
+    @(domainComputation = true, sequence = 2)
+    string SMX_05230A1_MEASUREMENT_1 = ["Oxygen, Standard Accuracy", "Oxygen, Industrial", "Oxygen, High Accuracy", "CO2 100% FS", "CO2 50% FS", "CO2 25% FS", "CO2 10% FS"];
+
+    // 0 (added) | 1 | 2 | 3 | 4
+    @(domainComputation = true, sequence = 3)
+    string SMX_05230A1_MEASUREMENT_2 = ["None", "CO2 100% FS", "CO2 50% FS", "CO2 25% FS", "CO2 10% FS"];
+
+    // 1 | 2. AFCD is first so it is the initial value for configuration A.
+    @(domainComputation = true, peelable = true, sequence = 4)
+    string SMX_05230A1_SAMPLING_SYSTEM = ["AFCD", "Internal Pump"];
+
+    // 0 (added) | 1 | 2 | 3
+    @(domainComputation = true, sequence = 5)
+    string SMX_05230A1_SIDE_PANEL_ACCESSORIES = ["None", "Sample Conditioning Panel", "Flow Meter + Valve", "Flow Meter"];
+
+    // 1 | 2. Derived from Measurement 2; never chosen by the rep.
+    @(configurable = false, peelable = true, sequence = 6)
+    string SMX_05230A1_MA_OUTPUT = ["Single", "Dual"];
+
+    // 1 | 2. Derived from the side panel; empty (null) and hidden without one.
+    @(configurable = false, peelable = true, sequence = 7)
+    string SMX_05230A1_PROBE_HOLDER = ["Supplied", "Supplied : Including Filter"];
+
+    // 1 | 2 | 3
+    @(domainComputation = true, peelable = true, sequence = 8)
+    string SMX_05230A1_SAMPLE_PROBE = ["Not Supplied", "25cm, SS, Tip, <180C", "1m SS"];
+
+    // 1 | 2. Not Supplied is first so it is the initial value without a side panel.
+    @(domainComputation = true, peelable = true, sequence = 9)
+    string SMX_05230A1_TRANSPORT_CASE = ["Not Supplied", "Supplied"];
+
+    // --- Measurement 1: selectable by Mini MP Configuration (E17:E23) ---------
+    // Each Standard Variant leaves one value, which is its default (1A for B/D,
+    // 2 for C/E). Configuration A keeps every value and its PCM default (1).
+    constraint(SMX_05230A1_MEASUREMENT_1 == "Oxygen, Standard Accuracy" -> SMX_05230A1_CONFIGURATION == "User Configured");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "Oxygen, Industrial" -> SMX_05230A1_CONFIGURATION == "User Configured" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV01)" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV03)");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "Oxygen, High Accuracy" -> SMX_05230A1_CONFIGURATION == "User Configured" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV02)" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV04)");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 100% FS" -> SMX_05230A1_CONFIGURATION == "User Configured");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 50% FS" -> SMX_05230A1_CONFIGURATION == "User Configured");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 25% FS" -> SMX_05230A1_CONFIGURATION == "User Configured");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 10% FS" -> SMX_05230A1_CONFIGURATION == "User Configured");
+
+    // --- Measurement 2: only for configuration A (E25:E28) --------------------
+    constraint(SMX_05230A1_CONFIGURATION != "User Configured" -> SMX_05230A1_MEASUREMENT_2 == "None", "Measurement 2 is only available for the User Configured Mini MP.");
+
+    // The same CO2 range cannot be measured twice (100%<->3 resolves the
+    // workbook's missing E25 exclusion as a typo; 50%<->4, 25%<->5, 10%<->6).
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 100% FS" -> SMX_05230A1_MEASUREMENT_2 != "CO2 100% FS", "Measurement 2 cannot repeat the Measurement 1 CO2 range (CO2 100% FS). Choose a different range or None.");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 50% FS" -> SMX_05230A1_MEASUREMENT_2 != "CO2 50% FS", "Measurement 2 cannot repeat the Measurement 1 CO2 range (CO2 50% FS). Choose a different range or None.");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 25% FS" -> SMX_05230A1_MEASUREMENT_2 != "CO2 25% FS", "Measurement 2 cannot repeat the Measurement 1 CO2 range (CO2 25% FS). Choose a different range or None.");
+    constraint(SMX_05230A1_MEASUREMENT_1 == "CO2 10% FS" -> SMX_05230A1_MEASUREMENT_2 != "CO2 10% FS", "Measurement 2 cannot repeat the Measurement 1 CO2 range (CO2 10% FS). Choose a different range or None.");
+
+    // --- Sampling System (E30:E31) ---------------------------------------------
+    // AFCD for A/B/C (default A/B/C); Internal Pump for A/D/E (default D/E).
+    constraint(SMX_05230A1_SAMPLING_SYSTEM == "AFCD" -> SMX_05230A1_CONFIGURATION == "User Configured" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV01)" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV02)");
+    constraint(SMX_05230A1_SAMPLING_SYSTEM == "Internal Pump" -> SMX_05230A1_CONFIGURATION == "User Configured" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV03)" || SMX_05230A1_CONFIGURATION == "Standard Variant (SV04)");
+
+    // --- mA Output: derived, Single without Measurement 2, Dual with it (E33:E34)
+    constraint(SMX_05230A1_MEASUREMENT_2 == "None" -> SMX_05230A1_MA_OUTPUT == "Single");
+    constraint(SMX_05230A1_MEASUREMENT_2 != "None" -> SMX_05230A1_MA_OUTPUT == "Dual");
+
+    // --- Side Panel Accessories (E52:E54) --------------------------------------
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Sample Conditioning Panel" -> SMX_05230A1_MEASUREMENT_1 != "Oxygen, Standard Accuracy" && SMX_05230A1_SAMPLING_SYSTEM == "Internal Pump");
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Flow Meter + Valve" -> SMX_05230A1_SAMPLING_SYSTEM == "Internal Pump");
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Flow Meter" -> SMX_05230A1_SAMPLING_SYSTEM == "AFCD");
+
+    // --- Probe Holder: derived from the side panel, hidden without one (E56:E57)
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Sample Conditioning Panel" -> SMX_05230A1_PROBE_HOLDER == "Supplied");
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Flow Meter + Valve" || SMX_05230A1_SIDE_PANEL_ACCESSORIES == "Flow Meter" -> SMX_05230A1_PROBE_HOLDER == "Supplied : Including Filter");
+    rule(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "None", "hide", "attribute", "SMX_05230A1_PROBE_HOLDER");
+
+    // --- Sample Probe: only with a side panel (B59) ----------------------------
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "None" -> SMX_05230A1_SAMPLE_PROBE == "Not Supplied");
+
+    // --- Transport Case: Not Supplied without a side panel (B64), else
+    // defaulted to Supplied (E66) but editable.
+    constraint(SMX_05230A1_SIDE_PANEL_ACCESSORIES == "None" -> SMX_05230A1_TRANSPORT_CASE == "Not Supplied");
+    // setdefault only targets relations, so the soft default is a preference.
+    preference(SMX_05230A1_SIDE_PANEL_ACCESSORIES != "None" -> SMX_05230A1_TRANSPORT_CASE == "Supplied");
+}

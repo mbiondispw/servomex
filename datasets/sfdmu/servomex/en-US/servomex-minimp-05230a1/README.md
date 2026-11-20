@@ -50,9 +50,9 @@ resolves against a record the previous step already wrote.
 | 8 | Product2 | Update | `StockKeepingUnit` | 1 |
 | 9 | ProductAttributeDefinition | Upsert | `Name` | 15 |
 | 10 | PricebookEntry | Upsert | `Product2.StockKeepingUnit;Pricebook2.Name;ProductSellingModel.Name;CurrencyIsoCode` | 1 |
-| 11 | AttributeBasedAdjRule | Upsert | `Name` | 25 |
-| 12 | AttributeAdjustmentCondition | Upsert | `AttributeBasedAdjRule.Name;AttributeDefinition.Code;Product.StockKeepingUnit` | 25 |
-| 13 | AttributeBasedAdjustment | Upsert | `AttributeBasedAdjRule.Name;PriceAdjustmentSchedule.Name;Product.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode` | 25 |
+| 11 | AttributeBasedAdjRule | Upsert | `Name` | 837 |
+| 12 | AttributeAdjustmentCondition | Upsert | `AttributeBasedAdjRule.Name;AttributeDefinition.Code;Product.StockKeepingUnit` | 4185 |
+| 13 | AttributeBasedAdjustment | Upsert | `AttributeBasedAdjRule.Name;PriceAdjustmentSchedule.Name;Product.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode` | 837 |
 
 ## Identity Strategy
 
@@ -66,7 +66,8 @@ values as direct external ids, because SFDMU v5 cannot reliably upsert on extern
 ids composed only of relationship traversals. `AttributeCategoryAttribute` has no
 direct identity field, so it is the one object matched by traversal.
 
-Each Option Adder's `AttributeBasedAdjRule` is named by its permitted value code.
+Each Option Adder combination's `AttributeBasedAdjRule` is named
+`<prefix>-ADDERS-<value code>-…`, one code per price-impacting attribute in manifest order.
 Its condition and adjustment have no direct identity field, so they match on
 rule name, attribute, product, and (for the adjustment) schedule, selling model,
 and currency, which SFDMU 5.6.4+ matches under `Upsert`.
@@ -96,6 +97,11 @@ python scripts/validate_sfdmu_v5_datasets.py --dataset datasets/sfdmu/servomex/e
 
 The plan does not yet implement every rule the source states. No Revenue Cloud constraints were generated, so loading this plan does **not** make every generated option combination valid.
 
+- MA_OUTPUT-option-adders: MA_OUTPUT has workbook prices but is not price-impacting, so its Option Adders are not applied (it adds 0).
+- PROBE_HOLDER-option-adders: PROBE_HOLDER has workbook prices but is not price-impacting, so its Option Adders are not applied (it adds 0).
+- SAMPLE_PROBE-option-adders: SAMPLE_PROBE has workbook prices but is not price-impacting, so its Option Adders are not applied (it adds 0).
+- SIDE_PANEL_ACCESSORIES-option-adders: SIDE_PANEL_ACCESSORIES has workbook prices but is not price-impacting, so its Option Adders are not applied (it adds 0).
+- TRANSPORT_CASE-option-adders: TRANSPORT_CASE has workbook prices but is not price-impacting, so its Option Adders are not applied (it adds 0).
 - 05230A1-variant-discount: The workbook gives the Standard Variants "10% discount off total" (F5:F8). No variant discount is generated yet, so a Standard Variant prices at its full base plus Option Adders.
 - 05230A1-option-dependencies: The workbook's Attribute dependency (column B) and Option Dependency (column E) rules are not generated. They belong to the hand-authored MiniMP5200 Constraint Model, so no generated option combination is proven valid yet.
 

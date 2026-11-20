@@ -33,6 +33,7 @@ target:
     selling_model: One-Time
     currency: GBP
     effective_from: "2026-01-01T00:00:00.000+0000"
+    price_impacting: [SIDE_PANEL]
 
 plan:
   path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1

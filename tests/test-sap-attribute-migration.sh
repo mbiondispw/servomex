@@ -928,18 +928,18 @@ run_rejection added-value-without-reason.yaml "added values need a reason" \
     "a value added beyond the source with no reason"
 
 echo ""
-echo "Test 45: a priced value becomes an Option Adder, and flags its attribute price-impacting"
+echo "Test 45: priced values become Option Adder rows over the price-impacting attributes"
 assert_equals "$(cat "$RUN_WORKBOOK/AttributeBasedAdjRule.csv" 2>/dev/null)" \
     "Name
-SMX-05230A1-SIDE_PANEL-3" \
-    "one adjustment rule per priced value, named by the value code"
+SMX-05230A1-ADDERS-3" \
+    "one rule per priced value combination; the unpriced None combination gets none"
 assert_equals "$(cat "$RUN_WORKBOOK/AttributeAdjustmentCondition.csv" 2>/dev/null)" \
     "\$\$AttributeBasedAdjRule.Name\$AttributeDefinition.Code\$Product.StockKeepingUnit,AttributeBasedAdjRule.Name,AttributeDefinition.Code,Product.StockKeepingUnit,Operator,StringValue
-SMX-05230A1-SIDE_PANEL-3;SMX-05230A1-SIDE_PANEL;05230A1,SMX-05230A1-SIDE_PANEL-3,SMX-05230A1-SIDE_PANEL,05230A1,equals,Flow Meter" \
+SMX-05230A1-ADDERS-3;SMX-05230A1-SIDE_PANEL;05230A1,SMX-05230A1-ADDERS-3,SMX-05230A1-SIDE_PANEL,05230A1,equals,Flow Meter" \
     "the rule's condition matches the attribute value on the product"
 assert_equals "$(cat "$RUN_WORKBOOK/AttributeBasedAdjustment.csv" 2>/dev/null)" \
     "\$\$AttributeBasedAdjRule.Name\$PriceAdjustmentSchedule.Name\$Product.StockKeepingUnit\$ProductSellingModel.Name\$CurrencyIsoCode,AttributeBasedAdjRule.Name,PriceAdjustmentSchedule.Name,Product.StockKeepingUnit,ProductSellingModel.Name,CurrencyIsoCode,AdjustmentType,AdjustmentValue,EffectiveFrom
-SMX-05230A1-SIDE_PANEL-3;Standard Attribute Based Adjustment;05230A1;One-Time;GBP,SMX-05230A1-SIDE_PANEL-3,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,947,2026-01-01T00:00:00.000+0000" \
+SMX-05230A1-ADDERS-3;Standard Attribute Based Adjustment;05230A1;One-Time;GBP,SMX-05230A1-ADDERS-3,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,947,2026-01-01T00:00:00.000+0000" \
     "the adjustment adds a flat 947 GBP One-Time on the attribute schedule"
 assert_contains "$RUN_WORKBOOK/ProductClassificationAttr.csv" \
     "Mini MP Configuration,User Configured,false,false,false,false,1,Active" \
@@ -948,13 +948,15 @@ assert_equals "$(tail -3 "$WORK_DIR/workbook-objects.txt" | tr '\n' '|')" \
     "AttributeBasedAdjRule Upsert Name|AttributeAdjustmentCondition Upsert AttributeBasedAdjRule.Name;AttributeDefinition.Code;Product.StockKeepingUnit|AttributeBasedAdjustment Upsert AttributeBasedAdjRule.Name;PriceAdjustmentSchedule.Name;Product.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode|" \
     "rule, condition, then adjustment load last, all by Upsert"
 assert_contains "$RUN_WORKBOOK/conversion-report.md" \
-    "| \`SIDE_PANEL\` | \`3\` | Flow Meter | 947 GBP | Product Config and Pricing!F54 |" \
+    "| \`SIDE_PANEL\` | \`3\` | Flow Meter | 947 GBP | Product Config and Pricing!F54 | yes |" \
     "the report lists each Option Adder with its cell"
 assert_absent "$RUN_A/export.json" "AttributeBasedAdj" "a manifest without prices writes no adjustments"
 run_rejection priced-excluded-value.yaml "only retained values may carry a price" \
     "a price on an excluded value"
 run_rejection price-without-cell.yaml "missing source.cell provenance" \
     "an Option Adder price with no cell"
+run_rejection price-impacting-without-default.yaml "'SIDE_PANEL' has no default_value" \
+    "a price-impacting attribute a line may leave empty"
 
 # --- The approved Mini MP conversion ---------------------------------------
 echo ""
@@ -993,12 +995,12 @@ INLET_COUPLER|Inlet Coupler,"1/4"" Barb"|true
 EXHAUST_VENT_OUTLET|Exhaust / Vent Outlet,Rear Panel|false
 USER_MANUAL|User Manual,English|false
 PRINTER|Printer,Not Supplied|true
-SIDE_PANEL_ACCESSORIES|Side Panel Accessories,None|true
-SAMPLE_PROBE|Sample Probe,Not Supplied|true
+SIDE_PANEL_ACCESSORIES|Side Panel Accessories,None|false
+SAMPLE_PROBE|Sample Probe,Not Supplied|false
 SAMPLING_SYSTEM|Sampling System,|false
-MA_OUTPUT|mA Output,|true
-PROBE_HOLDER|Probe Holder,|true
-TRANSPORT_CASE|Transport Case,|true
+MA_OUTPUT|mA Output,|false
+PROBE_HOLDER|Probe Holder,|false
+TRANSPORT_CASE|Transport Case,|false
 EOF
 assert_contains "$RUN_MINIMP/ProductAttributeDefinition.csv" \
     "SMX-05230A1-VEHICLE_POWER_ADAPTOR,12/24V Vehicle Power Adaptor,Supplied,false,false,true,true," \
@@ -1013,43 +1015,42 @@ assert_absent "$RUN_MINIMP/AttributePicklistValue.csv" "SMX-05230A1-PROBE_HOLDER
     "Probe Holder has no None value"
 
 echo ""
-echo "Test 46: every workbook option price is a GBP Option Adder on the Mini MP"
-assert_equals "$(($(wc -l <"$RUN_MINIMP/AttributeBasedAdjustment.csv") - 1))" "25" \
-    "25 priced workbook values give 25 adjustments"
-assert_equals "$(tail -n +2 "$RUN_MINIMP/AttributeBasedAdjustment.csv" | grep -c ',05230A1,One-Time,GBP,Amount,')" "25" \
+echo "Test 46: Option Adders price every combination of the five defaulted priced attributes"
+ADJ="$RUN_MINIMP/AttributeBasedAdjustment.csv"
+assert_equals "$(($(wc -l <"$ADJ") - 1))" "837" \
+    "6 x 7 x 5 x 2 x 2 combinations, less the 3 that add nothing, give 837 adjustments"
+assert_equals "$(tail -n +2 "$ADJ" | grep -c ',Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,')" "837" \
     "every adjustment is a flat GBP One-Time amount on the Mini MP"
+assert_equals "$(($(wc -l <"$RUN_MINIMP/AttributeAdjustmentCondition.csv") - 1))" "4185" \
+    "every rule conditions on all five price-impacting attributes"
+# Rule codes: SUPPLY_POWER, MEASUREMENT_1, MEASUREMENT_2, INLET_COUPLER, PRINTER.
 while IFS='|' read -r rule amount; do
-    assert_contains "$RUN_MINIMP/AttributeBasedAdjustment.csv" \
-        ",$rule,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,$amount," \
+    assert_contains "$ADJ" ",$rule,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,$amount," \
         "$rule adds $amount GBP"
 done <<'EOF'
-SMX-05230A1-SUPPLY_POWER-5|1292
-SMX-05230A1-SUPPLY_POWER-6|1292
-SMX-05230A1-SUPPLY_POWER-7|1292
-SMX-05230A1-MEASUREMENT_1-1A|4755
-SMX-05230A1-MEASUREMENT_1-2|7534
-SMX-05230A1-MEASUREMENT_1-3|4750
-SMX-05230A1-MEASUREMENT_1-6|4750
-SMX-05230A1-MEASUREMENT_2-1|4750
-SMX-05230A1-MEASUREMENT_2-4|4750
-SMX-05230A1-MA_OUTPUT-1|587
-SMX-05230A1-MA_OUTPUT-2|1170
-SMX-05230A1-INLET_COUPLER-2|99
-SMX-05230A1-PRINTER-2|1521
-SMX-05230A1-SIDE_PANEL_ACCESSORIES-1|1326
-SMX-05230A1-SIDE_PANEL_ACCESSORIES-2|1054
-SMX-05230A1-SIDE_PANEL_ACCESSORIES-3|947
-SMX-05230A1-PROBE_HOLDER-1|339
-SMX-05230A1-PROBE_HOLDER-2|467
-SMX-05230A1-SAMPLE_PROBE-2|111
-SMX-05230A1-SAMPLE_PROBE-3|133
-SMX-05230A1-TRANSPORT_CASE-2|806
+SMX-05230A1-ADDERS-5-1-0-1-1|1292
+SMX-05230A1-ADDERS-1-1A-0-1-1|4755
+SMX-05230A1-ADDERS-1-1-1-1-1|4750
+SMX-05230A1-ADDERS-1-1-0-2-1|99
+SMX-05230A1-ADDERS-1-1-0-1-2|1521
+SMX-05230A1-ADDERS-1-2-2-2-2|13904
+SMX-05230A1-ADDERS-7-1A-4-2-2|12417
+SMX-05230A1-ADDERS-6-6-4-2-2|12412
 EOF
-assert_equals "$(tail -n +2 "$RUN_MINIMP/AttributeBasedAdjustment.csv" | awk -F, '{s+=$(NF-1)} END {print s}')" "62725" \
-    "the adders total the workbook's column F option prices"
+assert_absent "$RUN_MINIMP/AttributeBasedAdjRule.csv" "SMX-05230A1-ADDERS-1-1-0-1-1" \
+    "the all-default combination adds nothing and has no rule"
 assert_contains "$RUN_MINIMP/AttributeAdjustmentCondition.csv" \
-    ",SMX-05230A1-INLET_COUPLER,05230A1,equals,\"1/8\"\" NPT\"" \
+    "SMX-05230A1-ADDERS-1-1-0-2-1,SMX-05230A1-INLET_COUPLER,05230A1,equals,\"1/8\"\" NPT\"" \
     "a condition matches the normalized picklist value, quoted as CSV"
+for attribute in MA_OUTPUT SIDE_PANEL_ACCESSORIES PROBE_HOLDER SAMPLE_PROBE TRANSPORT_CASE; do
+    assert_contains "$RUN_MINIMP/conversion-report.md" \
+        "WARNING: $attribute-option-adders: $attribute has workbook prices but is not price-impacting" \
+        "the report warns that $attribute's adders are not applied"
+done
+assert_equals "$(grep -c 'Pricing!F[0-9]* | yes |' "$RUN_MINIMP/conversion-report.md")" "15" \
+    "the report lists the 15 price-impacting Option Adders with their cells"
+assert_equals "$(grep -c 'Pricing!F[0-9]* | no, adds 0 |' "$RUN_MINIMP/conversion-report.md")" "10" \
+    "and the 10 priced values that add 0 for now"
 
 echo ""
 echo "Test 43: the committed Mini MP plan matches a fresh generation of its manifest"

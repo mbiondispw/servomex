@@ -15,8 +15,9 @@
 # mislabel (spec #32).
 #
 # Option Adders: every workbook option price (column F) is a `price` on its
-# permitted value, cited by its F cell. Each becomes a flat GBP attribute-based
-# price adjustment on the Mini MP line (#35). Unpriced values add nothing.
+# permitted value, cited by its F cell. The price-impacting attributes below
+# become flat GBP attribute-based price adjustments on the Mini MP line, one
+# per value combination (#35). Unpriced values add nothing.
 #
 # The workbook's "Customer pricing" sheet (Channel Partner discounts) is
 # discount data, not product attributes, and is out of scope for this manifest.
@@ -54,6 +55,16 @@ target:
     selling_model: One-Time
     currency: GBP
     effective_from: "2026-01-01T00:00:00.000+0000"
+    # The adjustment lookup hashes every price-impacting attribute, so the plan
+    # writes one row per value combination of these (837 rows). Only attributes
+    # with a static default qualify; the other priced attributes add 0 until
+    # the stacking Price Adjustment Matrix (#46) replaces these rows.
+    price_impacting:
+      - SUPPLY_POWER
+      - MEASUREMENT_1
+      - MEASUREMENT_2
+      - INLET_COUPLER
+      - PRINTER
 
 plan:
   path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1

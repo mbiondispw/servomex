@@ -23,6 +23,7 @@ Exit codes:
 import argparse
 import csv
 import io
+import itertools
 import json
 import re
 import sys
@@ -176,6 +177,42 @@ def validate_price(value, value_context, manifest):
     validate_provenance(price.get("source"), source_kind(manifest), context)
 
 
+# Every price-impacting attribute is a column of each combination row, so the row
+# count is the product of their value counts. Past this, use a Price Adjustment Matrix.
+MAX_ADDER_COMBINATIONS = 5000
+
+
+def validate_price_impacting(manifest, characteristics):
+    """Price-impacting attributes must always carry a value, or no combination row matches."""
+    option_adders = manifest["target"].get("option_adders")
+    if not option_adders:
+        return
+    context = "target.option_adders.price_impacting"
+    ids = option_adders["price_impacting"]
+    if len(set(ids)) != len(ids):
+        raise ManifestError(f"{context}: lists an attribute twice")
+    combinations = 1
+    for char_id in ids:
+        node = characteristics.get(char_id)
+        if not node or node["disposition"] != "generated" or node["type"] != "Picklist":
+            raise ManifestError(f"{context}: '{char_id}' is not a generated picklist characteristic")
+        if node.get("picklist"):
+            raise ManifestError(f"{context}: '{char_id}' uses a shared picklist and cannot be priced")
+        if not priced_values(node):
+            raise ManifestError(f"{context}: '{char_id}' has no priced value")
+        values = retained_values(node)
+        if len(values) > 1 and not node.get("default_value"):
+            raise ManifestError(
+                f"{context}: '{char_id}' has no default_value, so a line can carry no "
+                "value for it and match no combination row"
+            )
+        combinations *= len(values)
+    if combinations > MAX_ADDER_COMBINATIONS:
+        raise ManifestError(
+            f"{context}: {combinations} value combinations exceed {MAX_ADDER_COMBINATIONS}"
+        )
+
+
 def validate_values(node, context, manifest=None):
     for value_index, value in enumerate(node.get("values") or []):
         value_context = f"{context}.values[{value_index}]"
@@ -235,8 +272,10 @@ def validate(manifest):
     if option_adders is not None:
         if not isinstance(option_adders, dict):
             raise ManifestError("target.option_adders: must be a mapping")
-        for key in ("schedule", "selling_model", "currency", "effective_from"):
+        for key in ("schedule", "selling_model", "currency", "effective_from", "price_impacting"):
             require(option_adders, key, "target.option_adders")
+        if not isinstance(option_adders["price_impacting"], list):
+            raise ManifestError("target.option_adders: price_impacting must be a list of attribute ids")
 
     plan = manifest.get("plan")
     if not isinstance(plan, dict):
@@ -348,6 +387,8 @@ def validate(manifest):
                     f"{context}: default_value '{default_value}' is not a retained value label"
                 )
 
+    validate_price_impacting(manifest, characteristics)
+
     for node in characteristics.values():
         if node["disposition"] == "superseded":
             replacement = node["superseded_by"]
@@ -406,6 +447,8 @@ def build_records(manifest, picklists, categories, characteristics):
 
     tables = {name: [] for name in OBJECT_ORDER}
     warnings = []
+    option_adders = manifest["target"].get("option_adders")
+    price_impacting = list(option_adders["price_impacting"]) if option_adders else []
 
     def emit_picklist(owner_id, label, description, values):
         """Write one picklist and its permitted values, and return its code."""
@@ -532,7 +575,7 @@ def build_records(manifest, picklists, categories, characteristics):
             "AttributeNameOverride": label,
             "DefaultValue": default_value,
             "IsHidden": "false",
-            "IsPriceImpacting": "true" if priced_values(characteristic) else "false",
+            "IsPriceImpacting": "true" if char_id in price_impacting else "false",
             "IsReadOnly": "true" if is_single_value else "false",
             "IsRequired": "true" if is_single_value else "false",
             "Sequence": sequence,
@@ -579,22 +622,29 @@ def build_records(manifest, picklists, categories, characteristics):
             }
         )
 
-    option_adders = manifest["target"].get("option_adders")
-    for characteristic in sorted(generated_characteristics, key=lambda node: node["id"]):
-        attribute_code = qualify(prefix, characteristic["id"])
-        for value in priced_values(characteristic):
-            rule_name = qualify(prefix, characteristic["id"], value["code"])
+    # The attribute-based adjustment lookup hashes the values of every
+    # price-impacting attribute on the line, so a line matches exactly one row:
+    # each row is one value combination, priced at the sum of its Option Adders.
+    if price_impacting:
+        attributes = [characteristics[char_id] for char_id in price_impacting]
+        for combination in itertools.product(*(retained_values(node) for node in attributes)):
+            amount = sum((value.get("price") or {}).get("amount", 0) for value in combination)
+            if not amount:
+                continue
+            rule_name = qualify(prefix, "ADDERS", *(value["code"] for value in combination))
             tables["AttributeBasedAdjRule"].append({"Name": rule_name})
-            tables["AttributeAdjustmentCondition"].append(
-                {
-                    ADJ_CONDITION_IDENTITY: f"{rule_name};{attribute_code};{sku}",
-                    "AttributeBasedAdjRule.Name": rule_name,
-                    "AttributeDefinition.Code": attribute_code,
-                    "Product.StockKeepingUnit": sku,
-                    "Operator": "equals",
-                    "StringValue": ascii_normalize(value["label"]),
-                }
-            )
+            for node, value in zip(attributes, combination):
+                attribute_code = qualify(prefix, node["id"])
+                tables["AttributeAdjustmentCondition"].append(
+                    {
+                        ADJ_CONDITION_IDENTITY: f"{rule_name};{attribute_code};{sku}",
+                        "AttributeBasedAdjRule.Name": rule_name,
+                        "AttributeDefinition.Code": attribute_code,
+                        "Product.StockKeepingUnit": sku,
+                        "Operator": "equals",
+                        "StringValue": ascii_normalize(value["label"]),
+                    }
+                )
             identity = [
                 rule_name,
                 option_adders["schedule"],
@@ -611,10 +661,16 @@ def build_records(manifest, picklists, categories, characteristics):
                     "ProductSellingModel.Name": option_adders["selling_model"],
                     "CurrencyIsoCode": option_adders["currency"],
                     "AdjustmentType": "Amount",
-                    "AdjustmentValue": format_amount(value["price"]["amount"]),
+                    "AdjustmentValue": format_amount(amount),
                     "EffectiveFrom": str(option_adders["effective_from"]),
                 }
             )
+        for node in sorted(generated_characteristics, key=lambda node: node["id"]):
+            if priced_values(node) and node["id"] not in price_impacting:
+                warnings.append(
+                    f"{node['id']}-option-adders: {node['id']} has workbook prices but is not "
+                    "price-impacting, so its Option Adders are not applied (it adds 0)."
+                )
 
     duplicates = find_duplicate_codes(tables)
     if duplicates:
@@ -853,12 +909,8 @@ OPTION_ADDER_OBJECTS = {
 
 
 def has_option_adders(manifest):
-    return any(
-        value.get("price")
-        for node in manifest.get("characteristics") or []
-        if node.get("disposition") == "generated"
-        for value in node.get("values") or []
-    )
+    option_adders = manifest["target"].get("option_adders")
+    return bool(option_adders and option_adders.get("price_impacting"))
 
 
 def plan_objects(manifest):
@@ -1282,12 +1334,15 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
             "",
             "## Option Adders",
             "",
-            "Each priced permitted value adds a flat amount to the line through an "
-            f"attribute-based price adjustment on the `{option_adders['schedule']}` "
-            f"schedule ({option_adders['selling_model']}). Unpriced values add nothing.",
+            "Each priced permitted value is an Option Adder. The attribute-based adjustment "
+            "lookup hashes every price-impacting attribute, so the plan writes one "
+            f"adjustment per value combination of {', '.join(f'`{a}`' for a in option_adders['price_impacting'])}, "
+            "priced at the sum of its adders (combinations summing to 0 are skipped). "
+            f"Schedule `{option_adders['schedule']}`, {option_adders['selling_model']}, "
+            f"{option_adders['currency']}: {len(tables['AttributeBasedAdjustment'])} adjustments.",
             "",
-            "| Characteristic | Value Code | Value Label | Price | Source |",
-            "|----------------|------------|-------------|-------|--------|",
+            "| Characteristic | Value Code | Value Label | Price | Source | Price-impacting |",
+            "|----------------|------------|-------------|-------|--------|-----------------|",
         ]
         for node in sorted(characteristics.values(), key=lambda node: node["id"]):
             if node["disposition"] != "generated":
@@ -1302,7 +1357,8 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
                 lines.append(
                     f"| `{node['id']}` | `{value['code']}` | {value['label']} "
                     f"| {format_amount(value['price']['amount'])} {option_adders['currency']} "
-                    f"| {cited} |"
+                    f"| {cited} | "
+                    f"{'yes' if node['id'] in option_adders['price_impacting'] else 'no, adds 0'} |"
                 )
 
     lines += ["", "## Unresolved Source Logic", ""]
@@ -1414,7 +1470,8 @@ def render_plan_readme(manifest, tables, warnings):
     if has_option_adders(manifest):
         lines += [
             "",
-            "Each Option Adder's `AttributeBasedAdjRule` is named by its permitted value code.",
+            "Each Option Adder combination's `AttributeBasedAdjRule` is named",
+            "`<prefix>-ADDERS-<value code>-…`, one code per price-impacting attribute in manifest order.",
             "Its condition and adjustment have no direct identity field, so they match on",
             "rule name, attribute, product, and (for the adjustment) schedule, selling model,",
             "and currency, which SFDMU 5.6.4+ matches under `Upsert`.",

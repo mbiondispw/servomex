@@ -44,7 +44,7 @@ POLL_SECONDS = 3
 POLL_TIMEOUT = 180
 MONEY_TOLERANCE = Decimal("0.005")
 # A refusal containing one of these is the model failing, not a rule rejecting.
-MODEL_FAILURE_MARKERS = ("INTERNAL_SERVER_ERROR", "Deploy failed", "is invalid")
+MODEL_FAILURE_MARKERS = ("INTERNAL_SERVER_ERROR", "Deploy failed", "is invalid", "is not found in pick list")
 
 
 class CheckError(RuntimeError):
@@ -335,9 +335,9 @@ def configurator_refusal(org, quote_id):
 
 
 def check_rejected(scenario, refusal, lines):
-    """A rejected scenario passes when the org refuses the configuration (with the
-    expected message, if one is given), or, when no message is required, accepts the
-    quote but does not keep the requested combination of attribute values."""
+    """A rejected scenario passes when the configurator reports the conflict (with the
+    expected message, if one is given), or, when no message is required, the org did
+    not keep the requested combination and replaced it with other values."""
     message = scenario["expect"]["rejected"].get("message")
     if refusal is not None and any(marker in refusal for marker in MODEL_FAILURE_MARKERS):
         return [(False, f"configuration rules failed to run, so nothing was judged: {refusal}")]
@@ -356,6 +356,10 @@ def check_rejected(scenario, refusal, lines):
             for code, value in (requested.get("attributes") or {}).items()
             if actual.get(code) != value
         ]
+        # A broken model leaves attributes empty; that is not the rules replacing a value.
+        nulled = [code for code in (requested.get("attributes") or {}) if actual.get(code) is None]
+        if nulled:
+            return [(False, "requested attributes came back empty: " + ", ".join(nulled))]
     if dropped:
         return [(True, "requested combination not kept: " + "; ".join(dropped))]
     return [(False, "org accepted and kept the requested combination")]
@@ -365,12 +369,10 @@ def run_scenario(org, scenario, accounts):
     account = accounts[scenario["account"]]
     account_id = ensure_account(org, account)
     if "rejected" in scenario["expect"]:
-        try:
-            quote_id = place_quote(org, scenario, account_id, account["currency"])
-            status = wait_until_calculated(org, quote_id)
-        except CheckError as exc:
-            return None, "refused", check_rejected(scenario, str(exc), [])
-        # Place keeps a conflicted configuration; the configurator reports the conflict.
+        # Place never refuses on configuration rules: it keeps or silently resolves a
+        # conflicting request, so its errors are failures and the configurator judges.
+        quote_id = place_quote(org, scenario, account_id, account["currency"])
+        status = wait_until_calculated(org, quote_id)
         refusal = configurator_refusal(org, quote_id)
         return quote_id, status, check_rejected(scenario, refusal, priced_lines(org, quote_id, set()))
     quote_id = place_quote(org, scenario, account_id, account["currency"])
@@ -401,7 +403,7 @@ def main(argv=None):
             print(f"  ERROR {exc}")
             failed += 1
             continue
-        print(f"  quote {quote_id} ({status})" if quote_id else f"  no quote ({status})")
+        print(f"  quote {quote_id} ({status})")
         for passed, description in results:
             print(f"  {'ok  ' if passed else 'FAIL'} {description}")
         if not results or not all(passed for passed, _ in results):

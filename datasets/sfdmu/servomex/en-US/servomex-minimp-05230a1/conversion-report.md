@@ -111,7 +111,7 @@ Values generated beyond the source document. Each carries its reviewer's reason.
 
 ## Option Adders
 
-Each priced permitted value is an Option Adder. The attribute-based adjustment lookup hashes every price-impacting attribute, so the plan writes one adjustment per value combination of `SUPPLY_POWER`, `MEASUREMENT_1`, `MEASUREMENT_2`, `INLET_COUPLER`, `PRINTER`, priced at the sum of its adders (combinations summing to 0 are skipped). Schedule `Standard Attribute Based Adjustment`, One-Time, GBP: 837 adjustments.
+Each priced permitted value is an Option Adder. The attribute-based adjustment lookup hashes every price-impacting attribute, so the plan writes one adjustment per value combination of `SUPPLY_POWER`, `MEASUREMENT_1`, `MEASUREMENT_2`, `INLET_COUPLER`, `PRINTER`, priced at the sum of its adders and written as a negative `Amount` (a markup; a positive amount is a discount). Combinations summing to 0 are skipped. Schedule `Standard Attribute Based Adjustment`, One-Time, GBP: 837 adjustments.
 
 | Characteristic | Value Code | Value Label | Price | Source | Price-impacting |
 |----------------|------------|-------------|-------|--------|-----------------|

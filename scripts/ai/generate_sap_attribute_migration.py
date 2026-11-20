@@ -661,7 +661,8 @@ def build_records(manifest, picklists, categories, characteristics):
                     "ProductSellingModel.Name": option_adders["selling_model"],
                     "CurrencyIsoCode": option_adders["currency"],
                     "AdjustmentType": "Amount",
-                    "AdjustmentValue": format_amount(amount),
+                    # A positive Amount adjustment is a discount; an adder is a markup.
+                    "AdjustmentValue": format_amount(-amount),
                     "EffectiveFrom": str(option_adders["effective_from"]),
                 }
             )
@@ -1337,7 +1338,8 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
             "Each priced permitted value is an Option Adder. The attribute-based adjustment "
             "lookup hashes every price-impacting attribute, so the plan writes one "
             f"adjustment per value combination of {', '.join(f'`{a}`' for a in option_adders['price_impacting'])}, "
-            "priced at the sum of its adders (combinations summing to 0 are skipped). "
+            "priced at the sum of its adders and written as a negative `Amount` (a markup; "
+            "a positive amount is a discount). Combinations summing to 0 are skipped. "
             f"Schedule `{option_adders['schedule']}`, {option_adders['selling_model']}, "
             f"{option_adders['currency']}: {len(tables['AttributeBasedAdjustment'])} adjustments.",
             "",
@@ -1504,7 +1506,8 @@ def render_plan_readme(manifest, tables, warnings):
             "- The Option Adder objects use `Upsert`; conditions and adjustments are scoped to",
             f"  `Product.StockKeepingUnit = '{sku}'`. Each adjustment is a flat "
             f"{option_adders['currency']} amount on",
-            f"  `{option_adders['schedule']}`. The pricing procedure reads them through the",
+            f"  `{option_adders['schedule']}`, written as a negative `AdjustmentValue` because a",
+            "  positive `Amount` adjustment is a discount. The pricing procedure reads them through the",
             "  `Attribute_Based_Adjustment_Decision_Table`; refresh it after every load.",
         ]
     lines += [

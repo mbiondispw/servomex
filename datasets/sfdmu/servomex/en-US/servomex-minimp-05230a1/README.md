@@ -84,7 +84,8 @@ book, selling model, and currency, which SFDMU 5.6.4+ matches under `Upsert`.
   GBP `One-Time` entry in `Standard Price Book` to 4500, updating the existing entry in place.
 - The Option Adder objects use `Upsert`; conditions and adjustments are scoped to
   `Product.StockKeepingUnit = '05230A1'`. Each adjustment is a flat GBP amount on
-  `Standard Attribute Based Adjustment`. The pricing procedure reads them through the
+  `Standard Attribute Based Adjustment`, written as a negative `AdjustmentValue` because a
+  positive `Amount` adjustment is a discount. The pricing procedure reads them through the
   `Attribute_Based_Adjustment_Decision_Table`; refresh it after every load.
 
 ## Validate

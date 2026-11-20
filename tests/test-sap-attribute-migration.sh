@@ -939,8 +939,8 @@ SMX-05230A1-ADDERS-3;SMX-05230A1-SIDE_PANEL;05230A1,SMX-05230A1-ADDERS-3,SMX-052
     "the rule's condition matches the attribute value on the product"
 assert_equals "$(cat "$RUN_WORKBOOK/AttributeBasedAdjustment.csv" 2>/dev/null)" \
     "\$\$AttributeBasedAdjRule.Name\$PriceAdjustmentSchedule.Name\$Product.StockKeepingUnit\$ProductSellingModel.Name\$CurrencyIsoCode,AttributeBasedAdjRule.Name,PriceAdjustmentSchedule.Name,Product.StockKeepingUnit,ProductSellingModel.Name,CurrencyIsoCode,AdjustmentType,AdjustmentValue,EffectiveFrom
-SMX-05230A1-ADDERS-3;Standard Attribute Based Adjustment;05230A1;One-Time;GBP,SMX-05230A1-ADDERS-3,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,947,2026-01-01T00:00:00.000+0000" \
-    "the adjustment adds a flat 947 GBP One-Time on the attribute schedule"
+SMX-05230A1-ADDERS-3;Standard Attribute Based Adjustment;05230A1;One-Time;GBP,SMX-05230A1-ADDERS-3,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,-947,2026-01-01T00:00:00.000+0000" \
+    "the adjustment marks the line up a flat 947 GBP (a negative discount) One-Time on the attribute schedule"
 assert_contains "$RUN_WORKBOOK/ProductClassificationAttr.csv" \
     "Mini MP Configuration,User Configured,false,false,false,false,1,Active" \
     "an unpriced attribute is not price-impacting"
@@ -1025,7 +1025,7 @@ assert_equals "$(($(wc -l <"$RUN_MINIMP/AttributeAdjustmentCondition.csv") - 1))
     "every rule conditions on all five price-impacting attributes"
 # Rule codes: SUPPLY_POWER, MEASUREMENT_1, MEASUREMENT_2, INLET_COUPLER, PRINTER.
 while IFS='|' read -r rule amount; do
-    assert_contains "$ADJ" ",$rule,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,$amount," \
+    assert_contains "$ADJ" ",$rule,Standard Attribute Based Adjustment,05230A1,One-Time,GBP,Amount,-$amount," \
         "$rule adds $amount GBP"
 done <<'EOF'
 SMX-05230A1-ADDERS-5-1-0-1-1|1292

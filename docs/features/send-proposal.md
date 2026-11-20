@@ -114,6 +114,12 @@ one-line action insert and the label, and redeploy.
   `rewrite_contact_emails_to_demo_inbox`). Run the rewrite before the first send.
 - Email deliverability set to **All email**.
 
+**Troubleshooting.** If every template fails with "Could not Enqueue to Kafka … contentVersion {0}"
+or "invalid object IDs in the Doc Generation Additional Input", the org's docgen
+templates or class are broken, not Send Proposal. See #74 for the 2026-11-20
+`servomex` repair: new template versions (v2) and rlm-base-dev's current
+`RLM_DocumentGenerationCreate`.
+
 ## Manual check
 
 There's no automated test, because document generation is asynchronous and

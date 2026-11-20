@@ -59,6 +59,14 @@ tasks:
             sobject: Quote
             profiles: Admin
 
+    create_backup_demo_quote:
+        group: Servomex
+        description: >-
+            Create the NordicGas AS backup demo Quote (Lars Eriksson as Quote Contact, priced
+            through Place Sales Transaction), or reset it to Draft when it exists. Needs the
+            contact email rewrite to have run. Option dry_run=true only reads the org.
+        class_path: tasks.backup_demo_quote.CreateBackupDemoQuote
+
 flows:
     deploy_send_proposal:
         group: Servomex

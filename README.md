@@ -29,6 +29,7 @@ See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/
 - `cci task run deploy_servomex --org servomex`: deploy `force-app`, including the `DemoInboxAddress` Apex module.
 - `cci task run rewrite_contact_emails_to_demo_inbox --org servomex`: give every Contact a unique Demo Inbox Address (`martin.biondi+<alias>@piercewashington.com`, see [GLOSSARY.md](GLOSSARY.md)) so no Proposal reaches a real customer. Re-runnable; it prints how many Contacts changed and were skipped. Run it after every org refresh or Contact data load.
 - `cci flow run deploy_send_proposal --org servomex`: deploy `force-app` and assign the Servomex Quote page, which adds the **Send Proposal** Quote action. See [docs/features/send-proposal.md](docs/features/send-proposal.md).
+- `cci task run create_backup_demo_quote --org servomex`: create the NordicGas AS backup demo Quote (Lars Eriksson as Quote Contact, priced through Place Sales Transaction), or reset it to Draft when it already exists. Run the contact email rewrite first. Add `-o dry_run true` to only read the org. Without CCI: `python3 scripts/demo/backup_demo_quote.py --org servomex [--dry-run]`.
 
 CumulusCI needs a `.git` directory, so run these from a regular clone, not a `git worktree`.
 

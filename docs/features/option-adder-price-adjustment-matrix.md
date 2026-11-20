@@ -215,7 +215,8 @@ these in a scratch org, or in `servomex` once the demo freeze is over, against a
 **cloned, inactive** procedure version. Simulate before activating anything.
 
 1. **Sign.** A row with `Adjustment_Value__c = -1292` must *raise* the net price by
-   £1,292. If it lowers it, flip `ADJUSTMENT_SIGN` in the generator, regenerate and
+   £1,292. #35 verified live that a positive `Amount` attribute-based adjustment is a
+   discount (4500 − 2813 = 1687), so the matrix writes adders as negative values too. If it lowers it, flip `ADJUSTMENT_SIGN` in the generator, regenerate and
    reload. The plan upserts, so no deletes are needed.
 2. **List over the attribute node.** *Use As List* on the `AttributePicklistValue`
    tag returns one row per priced selection. If it can't read a child-node tag,

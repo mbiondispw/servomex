@@ -240,13 +240,15 @@ SAP_PRICED="$WORK_DIR/sap-priced.yaml"
 "$PYTHON" -c '
 import sys, yaml
 manifest = yaml.safe_load(open(sys.argv[1]))
-manifest["target"]["option_adders"] = {
-    "schedule": "Standard Attribute Based Adjustment", "selling_model": "One-Time",
-    "currency": "GBP", "effective_from": "2026-01-01T00:00:00.000+0000", "price_impacting": [],
-}
 node = next(n for n in manifest["characteristics"] if n.get("values"))
 value = node["values"][0]
 value["price"] = {"amount": 250, "source": {"page": 7, "text": "250.00"}}
+node["default_value"] = value["label"]
+manifest["target"]["option_adders"] = {
+    "schedule": "Standard Attribute Based Adjustment", "selling_model": "One-Time",
+    "currency": "GBP", "effective_from": "2026-01-01T00:00:00.000+0000",
+    "price_impacting": [node["id"]],
+}
 print(node["id"], value["code"])
 yaml.safe_dump(manifest, open(sys.argv[2], "w"), sort_keys=False)
 ' "$SAP_FIXTURES/approved-tracer.yaml" "$SAP_PRICED" >"$WORK_DIR/sap-priced.ids"

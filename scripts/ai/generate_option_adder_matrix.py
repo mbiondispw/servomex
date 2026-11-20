@@ -53,9 +53,10 @@ ADDER_COLUMNS = [
     "Source_Reference__c",
 ]
 
-# A Price Adjustment Matrix adjustment is a discount: a positive Amount lowers
-# the price. An Option Adder raises it, so its adjustment value is negative.
-# The design doc's verification spike confirms this before wiring.
+# A positive Amount adjustment is a discount (verified live for attribute-based
+# adjustments in #35). An Option Adder raises the price, so its value is
+# negative. The design doc's verification spike confirms the same for the
+# Price Adjustment Matrix before wiring.
 ADJUSTMENT_SIGN = -1
 
 

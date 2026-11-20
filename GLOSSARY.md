@@ -40,6 +40,8 @@ configurator attributes. Owning skill:
 | **Disposition** | The recorded decision for a source node: `generated`, `excluded`, `deferred`, `superseded`, or `source-control`. A permitted value is `generated`, `excluded`, or `added` (generated beyond the source, with no provenance but a recorded reason). |
 | **Source-qualified code** | A generated Revenue Cloud code namespaced by source system, class, characteristic, and value, so repeated raw SAP codes cannot collide globally. |
 | **Workbook Source** | A non-SAP Manifest source: a spreadsheet cited by sheet and cell (`source.kind: workbook`). It has no SAP Class, so codes are namespaced by the SAP material. |
+| **Option Adder** | The flat price a Permitted Value adds to its product's line, recorded as the value's `price` in the Manifest with its source cell. Unpriced values add nothing. |
+| **Option Adder Matrix** | One `Option_Adder__c` row per Option Adder (product, picklist value and currency to amount), read by the `Option_Adder_Matrix` decision table so a Price Adjustment Matrix can stack every selected adder. A value whose price is removed keeps its row, marked inactive. |
 | **Conversion report** | The generated Markdown record of dispositions, generated counts, exclusions, added values, and unresolved source logic. |
 
 ## SAP Configuration Rules

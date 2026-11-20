@@ -70,6 +70,29 @@ characteristics:
           cell: C5:D5
           text: "B | Standard Variant (SV01)"
 
+  - id: SIDE_PANEL
+    label: Side Panel Accessories
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 2
+    default_value: None
+    source:
+      sheet: Product Config and Pricing
+      cell: A52
+      text: "Side Panel Accessories"
+    values:
+      - code: "0"
+        label: None
+        disposition: added
+        disposition_reason: The workbook offers no explicit "no side panel" choice.
+      - code: "3"
+        label: Flow Meter
+        source:
+          sheet: Product Config and Pricing
+          cell: C54:D54
+          text: "3 | Flow Meter"
+
   - id: SERIAL_NUMBER
     label: Serial Number
     disposition: excluded

@@ -40,6 +40,10 @@ except ImportError:  # pragma: no cover - environment guard
 API_VERSION = "66.0"
 
 DISPOSITIONS = {"generated", "excluded", "deferred", "superseded", "source-control"}
+# A permitted value is generated or excluded as the source states it, or added
+# beyond the source (no provenance, but a recorded reason).
+VALUE_DISPOSITIONS = {"generated", "excluded", "added"}
+RETAINED_VALUE_DISPOSITIONS = {"generated", "added"}
 
 # Where provenance points inside each kind of source document. A SAP
 # classification export is cited by page; a Workbook Source by sheet and cell.
@@ -157,12 +161,13 @@ def validate_values(node, context):
         require(value, "code", value_context)
         require(value, "label", value_context)
         value_disposition = value.get("disposition", "generated")
-        if value_disposition not in {"generated", "excluded"}:
+        if value_disposition not in VALUE_DISPOSITIONS:
             raise ManifestError(
-                f"{value_context}: value disposition must be 'generated' or 'excluded'"
+                f"{value_context}: value disposition must be one of "
+                f"{sorted(VALUE_DISPOSITIONS)}"
             )
-        if value_disposition == "excluded" and not value.get("disposition_reason"):
-            raise ManifestError(f"{value_context}: excluded values need a reason")
+        if value_disposition in {"excluded", "added"} and not value.get("disposition_reason"):
+            raise ManifestError(f"{value_context}: {value_disposition} values need a reason")
 
 
 def validate(manifest):
@@ -225,7 +230,7 @@ def validate(manifest):
         if disposition == "generated" and not [
             value
             for value in (node.get("values") or [])
-            if value.get("disposition", "generated") == "generated"
+            if is_retained(value)
         ]:
             raise ManifestError(f"{context}: shared picklists need retained values")
 
@@ -288,7 +293,7 @@ def validate(manifest):
         values = [
             value
             for value in (node.get("values") or [])
-            if value.get("disposition", "generated") == "generated"
+            if is_retained(value)
         ]
         if data_type == "Picklist" and not values and not shared:
             raise ManifestError(f"{context}: picklist characteristics need retained values")
@@ -324,11 +329,15 @@ def validate(manifest):
 # ---------------------------------------------------------------------------
 
 
+def is_retained(value):
+    return value.get("disposition", "generated") in RETAINED_VALUE_DISPOSITIONS
+
+
 def retained_values(characteristic):
     return [
         value
         for value in (characteristic.get("values") or [])
-        if value.get("disposition", "generated") == "generated"
+        if is_retained(value)
     ]
 
 
@@ -1054,6 +1063,31 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         for char_id, value in sorted(excluded_values, key=lambda item: (item[0], str(item[1]["code"]))):
             lines.append(
                 f"| `{char_id}` | `{value['code']}` | {value['label']} | {value['disposition_reason']} |"
+            )
+    else:
+        lines.append("None.")
+
+    added_values = []
+    for node in list(picklists.values()) + list(characteristics.values()):
+        for value in node.get("values") or []:
+            if value.get("disposition") == "added":
+                added_values.append((node["id"], value))
+    lines += [
+        "",
+        "## Added Permitted Values",
+        "",
+        "Values generated beyond the source document. Each carries its reviewer's reason.",
+        "",
+    ]
+    if added_values:
+        lines += [
+            "| Characteristic | Value Code | Value Label | Disposition | Reason |",
+            "|----------------|------------|-------------|-------------|--------|",
+        ]
+        for char_id, value in sorted(added_values, key=lambda item: (item[0], str(item[1]["code"]))):
+            lines.append(
+                f"| `{char_id}` | `{value['code']}` | {value['label']} "
+                f"| added, not in source | {value['disposition_reason']} |"
             )
     else:
         lines.append("None.")

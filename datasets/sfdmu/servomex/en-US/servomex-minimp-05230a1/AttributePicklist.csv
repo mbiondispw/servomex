@@ -1,3 +1,16 @@
 Code,Name,DataType,Description,Status
 SMX-05230A1-CONFIGURATION-PL,Mini MP Configuration (CONFIGURATION),Text,Permitted-value set for workbook attribute CONFIGURATION,Active
+SMX-05230A1-EXHAUST_VENT_OUTLET-PL,Exhaust / Vent Outlet (EXHAUST_VENT_OUTLET),Text,Permitted-value set for workbook attribute EXHAUST_VENT_OUTLET,Active
+SMX-05230A1-INLET_COUPLER-PL,Inlet Coupler (INLET_COUPLER),Text,Permitted-value set for workbook attribute INLET_COUPLER,Active
+SMX-05230A1-MA_OUTPUT-PL,mA Output (MA_OUTPUT),Text,Permitted-value set for workbook attribute MA_OUTPUT,Active
+SMX-05230A1-MEASUREMENT_1-PL,Measurement 1 (MEASUREMENT_1),Text,Permitted-value set for workbook attribute MEASUREMENT_1,Active
+SMX-05230A1-MEASUREMENT_2-PL,Measurement 2 (MEASUREMENT_2),Text,Permitted-value set for workbook attribute MEASUREMENT_2,Active
+SMX-05230A1-PRINTER-PL,Printer (PRINTER),Text,Permitted-value set for workbook attribute PRINTER,Active
+SMX-05230A1-PROBE_HOLDER-PL,Probe Holder (PROBE_HOLDER),Text,Permitted-value set for workbook attribute PROBE_HOLDER,Active
+SMX-05230A1-SAMPLE_PROBE-PL,Sample Probe (SAMPLE_PROBE),Text,Permitted-value set for workbook attribute SAMPLE_PROBE,Active
+SMX-05230A1-SAMPLING_SYSTEM-PL,Sampling System (SAMPLING_SYSTEM),Text,Permitted-value set for workbook attribute SAMPLING_SYSTEM,Active
+SMX-05230A1-SIDE_PANEL_ACCESSORIES-PL,Side Panel Accessories (SIDE_PANEL_ACCESSORIES),Text,Permitted-value set for workbook attribute SIDE_PANEL_ACCESSORIES,Active
 SMX-05230A1-SUPPLY_POWER-PL,Supply Power (SUPPLY_POWER),Text,Permitted-value set for workbook attribute SUPPLY_POWER,Active
+SMX-05230A1-TRANSPORT_CASE-PL,Transport Case (TRANSPORT_CASE),Text,Permitted-value set for workbook attribute TRANSPORT_CASE,Active
+SMX-05230A1-USER_MANUAL-PL,User Manual (USER_MANUAL),Text,Permitted-value set for workbook attribute USER_MANUAL,Active
+SMX-05230A1-VEHICLE_POWER_ADAPTOR-PL,12/24V Vehicle Power Adaptor (VEHICLE_POWER_ADAPTOR),Text,Permitted-value set for workbook attribute VEHICLE_POWER_ADAPTOR,Active

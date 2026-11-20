@@ -230,7 +230,7 @@ run_rejection values-on-non-generated-node.yaml "only generated characteristics 
     "permitted values attached to a held-back node"
 run_rejection excluded-value-without-reason.yaml "excluded values need a reason" \
     "a dropped permitted value with no reason"
-run_rejection unknown-value-disposition.yaml "value disposition must be 'generated' or 'excluded'" \
+run_rejection unknown-value-disposition.yaml "value disposition must be one of ['added', 'excluded', 'generated']" \
     "a permitted value dispositioned as a source node"
 
 echo ""
@@ -911,9 +911,25 @@ assert_contains "$RUN_WORKBOOK/README.md" "workbook \`5230A1 Product configurati
 assert_contains "$RUN_WORKBOOK/README.md" "- \`PricebookEntry\` uses \`Upsert\`" \
     "the workbook README states how the price book entry is written"
 
+echo ""
+echo "Test 44: a value added beyond the source is generated and recorded with its Disposition"
+assert_contains "$RUN_WORKBOOK/AttributePicklistValue.csv" \
+    "SMX-05230A1-SIDE_PANEL-0,None,None,None,0,SMX-05230A1-SIDE_PANEL-PL,1," \
+    "the added None value is a permitted value, coded 0, offered first"
+assert_contains "$RUN_WORKBOOK/ProductAttributeDefinition.csv" \
+    "Side Panel Accessories,None,false,false,false,false,2,Active" \
+    "an added value can be the approved default"
+assert_contains "$RUN_WORKBOOK/conversion-report.md" "## Added Permitted Values" \
+    "the report has an added-values section"
+assert_contains "$RUN_WORKBOOK/conversion-report.md" \
+    "| \`SIDE_PANEL\` | \`0\` | None | added, not in source | The workbook offers no explicit \"no side panel\" choice. |" \
+    "the report lists the added value with its Disposition and reason"
+run_rejection added-value-without-reason.yaml "added values need a reason" \
+    "a value added beyond the source with no reason"
+
 # --- The approved Mini MP conversion ---------------------------------------
 echo ""
-echo "Test 42: the approved Mini MP manifest converts Configuration and Supply Power at 4500 GBP"
+echo "Test 42: the approved Mini MP manifest converts all 15 workbook attributes with their defaults at 4500 GBP"
 MINIMP_MANIFEST="$REPO_ROOT/datasets/sap/servomex-05230a1/manifest.yaml"
 RUN_MINIMP="$WORK_DIR/run-minimp"
 "$PYTHON" "$GENERATOR" --manifest "$MINIMP_MANIFEST" \
@@ -935,6 +951,37 @@ assert_equals "$SUPPLY_ROWS" "6" "Supply Power offers its six workbook values"
 assert_contains "$RUN_MINIMP/PricebookEntry.csv" \
     "05230A1;Standard Price Book;One-Time;GBP,05230A1,Standard Price Book,One-Time,GBP,4500,true" \
     "the Standard Price Book entry is 4500 GBP One-Time"
+assert_equals "$(($(wc -l <"$RUN_MINIMP/ProductAttributeDefinition.csv") - 1))" "15" \
+    "all 15 workbook attributes reach the Mini MP"
+while IFS='|' read -r attribute default; do
+    assert_contains "$RUN_MINIMP/ProductAttributeDefinition.csv" \
+        "SMX-05230A1-$attribute,$default,false,false,false,false," \
+        "$attribute defaults to $default and stays editable"
+done <<'EOF'
+MEASUREMENT_1|Measurement 1,"Oxygen, Standard Accuracy"
+MEASUREMENT_2|Measurement 2,None
+INLET_COUPLER|Inlet Coupler,"1/4"" Barb"
+EXHAUST_VENT_OUTLET|Exhaust / Vent Outlet,Rear Panel
+USER_MANUAL|User Manual,English
+PRINTER|Printer,Not Supplied
+SIDE_PANEL_ACCESSORIES|Side Panel Accessories,None
+SAMPLE_PROBE|Sample Probe,Not Supplied
+SAMPLING_SYSTEM|Sampling System,
+MA_OUTPUT|mA Output,
+PROBE_HOLDER|Probe Holder,
+TRANSPORT_CASE|Transport Case,
+EOF
+assert_contains "$RUN_MINIMP/ProductAttributeDefinition.csv" \
+    "SMX-05230A1-VEHICLE_POWER_ADAPTOR,12/24V Vehicle Power Adaptor,Supplied,false,false,true,true," \
+    "the Vehicle Power Adaptor is required, read-only and Supplied"
+for attribute in MEASUREMENT_2 SIDE_PANEL_ACCESSORIES; do
+    assert_contains "$RUN_MINIMP/AttributePicklistValue.csv" "SMX-05230A1-$attribute-0,None,None,None,0," \
+        "$attribute offers an explicit None, coded 0"
+    assert_contains "$RUN_MINIMP/conversion-report.md" "| \`$attribute\` | \`0\` | None | added, not in source |" \
+        "the report records $attribute None as added, not in source"
+done
+assert_absent "$RUN_MINIMP/AttributePicklistValue.csv" "SMX-05230A1-PROBE_HOLDER-0," \
+    "Probe Holder has no None value"
 
 echo ""
 echo "Test 43: the committed Mini MP plan matches a fresh generation of its manifest"

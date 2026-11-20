@@ -282,7 +282,7 @@ subagent ProductSelection:
 subagent QuoteManagement:
 
     label: "Quote Management"
-    description: "Manage quote operations for new business and in-flight quotes: create initial quotes, add products, apply quote-line discounts, update quote and quote line item details, and sync or unsync quotes to opportunities. Does not handle asset-backed amendment, renewal, cancellation, or consumption requests."
+    description: "Manage quote operations for new business and in-flight quotes: create a Service Upsell opportunity when the user names only an account, create initial quotes, add products, apply quote-line discounts, update quote and quote line item details, and sync or unsync quotes to opportunities. Does not handle asset-backed amendment, renewal, cancellation, or consumption requests."
 
     reasoning:
         instructions: ->
@@ -294,7 +294,7 @@ subagent QuoteManagement:
 
             | Manage quote operations for new business and in-flight quotes: create initial quotes, add quote lines, apply line discounts, update quote/line fields, and sync or unsync quotes to opportunities.
               Hard constraints:
-              - BIAS TOWARD ACTION. When the user's intent and the target record(s) are clear, perform the requested action in the same turn instead of asking the user to confirm. Ask a confirming or clarifying question ONLY when something required is genuinely ambiguous (which record, which line, what value). Never ask the user to confirm something they have already clearly requested.
+              - BIAS TOWARD ACTION. When the user's intent and the target record(s) are clear, perform the requested action in the same turn instead of asking the user to confirm. Ask a confirming or clarifying question ONLY when something required is genuinely ambiguous (which record, which line, what value), or to confirm a proposed new opportunity (see Opportunity for a quote). Never ask the user to confirm something they have already clearly requested.
               - Treat a clear affirmative reply to your own proposal — "yes", "go ahead", "apply it", "discount all of them", "do it" — as final confirmation. On that reply, immediately call the corresponding action(s) and do NOT restate the plan, re-list records, or ask again. If applying to multiple lines, resolve the target lines (call QueryQuoteLineRecords if you do not already hold their IDs) and then loop the action over every line in the same turn.
               - When updating a quote or quote line (UpdateQuoteDetails, UpdateQuoteLineItemDetails, UpdateRecordFields), briefly state the exact change you are making, then apply it when the requested change and target record are clear.
               - This agent does not configure product attributes, create amendment, renewal or cancellation quotes, or answer usage and consumption questions. Say so briefly and offer the quote operations you support.
@@ -310,8 +310,13 @@ subagent QuoteManagement:
               - Resolve all IDs using actions (IdentifyRecordByName, QueryRecords, QueryQuoteLineRecords, GetRecordDetails, etc.); never guess.
               - If multiple records match, present options and wait for user selection before proceeding.
               Workflow guidance:
-              - Initial quote: identify the opportunity first, create the quote, and optionally add requested products. When the user names an existing opportunity, resolve it with IdentifyRecordByName (objectApiName Opportunity) and quote that opportunity.
-              - Requested products: resolve each one with IdentifyRecordByName (objectApiName Product2). Training and SAT are sold per Service Day: "2 operator training days" means quantity 2 of Operator Training — per Service Day, and "1 SAT day" means quantity 1 of Site Acceptance Test (SAT) — per Service Day. If the wording matches several products, list them and ask the user to choose.
+              - Opportunity for a quote (initial quote):
+                - Existing opportunity: if the user names an existing opportunity, resolve it with IdentifyRecordByName (objectApiName Opportunity) and quote that opportunity. If currentObjectApiName is Opportunity or currentRecordId starts with 006, quote that opportunity. In both cases never call CreateServiceOpportunity.
+                - Closed opportunity: before quoting an existing opportunity, check its stage with GetRecordDetails. If it is Closed Won or Closed Lost, do not create a quote or add lines. Say the opportunity is closed and offer to quote a new opportunity on the same account instead.
+                - New opportunity: when the user names an account but no opportunity and the page is not an opportunity, ALWAYS propose a new opportunity; never pick one of the account's existing opportunities yourself. Resolve the account with IdentifyRecordByName (objectApiName Account) and read its currency with GetRecordDetails. Then show the proposal and ask ONE confirmation question, with no action yet: Name "<Account Name> — Services — <today as YYYY-MM-DD>", Stage Proposal/Quote, Close Date today + 30 days, Currency the account's currency, Price Book Standard Price Book, and the products and quantities you will add. Use any name, close date or currency the user gave instead of the default.
+                - On confirmation ("yes", "go ahead", "create it"), in the same turn: call CreateServiceOpportunity with the account and only the values the user overrode, then CreateInitialQuote with the new opportunityId, then AddQuoteLineItemToQuote for each requested product. Do not ask again.
+                - If the user changes a default instead of confirming, show the updated proposal and ask once more.
+              - Requested products: resolve each one with IdentifyRecordByName (objectApiName Product2). Training and SAT are sold per Service Day: "2 operator training days" means quantity 2 of Operator Training — per Service Day, and "1 SAT day" means quantity 1 of Site Acceptance Test (SAT) — per Service Day. If the wording matches several products, list them and ask the user to choose. Quantities are whole numbers; add at most 10 lines per request.
               - Add quote line: ensure quoteId, productId, quantity, and default product selling model are resolved; if no default selling model exists, explain and stop. Once those are resolved and the user has asked to add the product, call AddQuoteLineItemToQuote directly — do not ask the user to confirm a clear, intentional add. Confirm only if the product, quantity, or target quote is ambiguous.
               - Quote line dates: for Evergreen, use start date (default current date if missing). For Term-Defined, set both start and end dates (default start date to current date if missing).
               - Discounts (apply only to explicitly selected quote lines; never header-level):
@@ -362,6 +367,11 @@ subagent QuoteManagement:
                 with quoteLineItemId=...
             IdentifyObjectByName: @actions.IdentifyObjectByName
                 with objectName=...
+            CreateServiceOpportunity: @actions.CreateServiceOpportunity
+                with accountId=...
+                with opportunityName=...
+                with closeDate=...
+                with currencyIsoCode=...
             CreateInitialQuote: @actions.CreateInitialQuote
                 with opportunityID=...
                 with priceBookName=...
@@ -762,6 +772,60 @@ subagent QuoteManagement:
                     description: "A list of the matching API names of Salesforce object types."
                     label: "objectApiNames"
                     is_displayable: True
+                    filter_from_agent: False
+                    complex_data_type_name: "lightning__textType"
+
+        CreateServiceOpportunity:
+            description: "Creates a new Service Upsell opportunity on an account, at stage Proposal/Quote with the Standard Price Book and Next Step 'Send services quote', and returns its Opportunity ID. Call it only after the user has confirmed the proposed new opportunity, and never when the user named an existing opportunity or is on an opportunity page. Pass only the optional values the user asked for; blanks use the defaults."
+            label: "Create Service Opportunity"
+            require_user_confirmation: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Creating opportunity ..."
+            target: "flow://SMX_Create_Opportunity"
+
+            inputs:
+                "accountId": string
+                    description: "The Account record ID (starts with 001) the opportunity is for. Resolve it with IdentifyRecordByName; never guess."
+                    label: "Account ID"
+                    is_required: True
+                    is_user_input: False
+                    complex_data_type_name: "lightning__textType"
+                "opportunityName": string
+                    description: "The opportunity name, only if the user gave one. Leave blank for the default '<Account Name> — Services — <today YYYY-MM-DD>'."
+                    label: "Opportunity Name"
+                    is_required: False
+                    is_user_input: True
+                    complex_data_type_name: "lightning__textType"
+                "closeDate": string
+                    description: "The close date in yyyy-mm-dd format, only if the user gave one. Leave blank for the default, today + 30 days."
+                    label: "Close Date"
+                    is_required: False
+                    is_user_input: True
+                    complex_data_type_name: "lightning__textType"
+                "currencyIsoCode": string
+                    description: "The three-letter ISO currency code (for example GBP), only if the user asked for a currency different from the account's. Leave blank for the account's currency."
+                    label: "Currency ISO Code"
+                    is_required: False
+                    is_user_input: True
+                    complex_data_type_name: "lightning__textType"
+
+            outputs:
+                "opportunityId": string
+                    description: "The record ID of the new opportunity. Pass it to CreateInitialQuote as opportunityID."
+                    label: "Opportunity ID"
+                    is_displayable: False
+                    filter_from_agent: False
+                    complex_data_type_name: "lightning__textType"
+                "isSuccess": boolean
+                    description: "Indicates whether the opportunity was created."
+                    label: "isSuccess"
+                    is_displayable: False
+                    filter_from_agent: False
+                    complex_data_type_name: "lightning__booleanType"
+                "errorMessage": string
+                    description: "The reason the opportunity could not be created, if it failed."
+                    label: "errorMessage"
+                    is_displayable: False
                     filter_from_agent: False
                     complex_data_type_name: "lightning__textType"
 

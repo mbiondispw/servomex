@@ -120,6 +120,42 @@ templates or class are broken, not Send Proposal. See #74 for the 2026-11-20
 `servomex` repair: new template versions (v2) and rlm-base-dev's current
 `RLM_DocumentGenerationCreate`.
 
+## Backup demo quote
+
+`create_backup_demo_quote` gives the presenter a send-ready Quote to fall back
+on if the live build runs long:
+
+```bash
+cci task run create_backup_demo_quote --org servomex                 # create or reset
+cci task run create_backup_demo_quote --org servomex -o dry_run true # read-only plan
+python3 scripts/demo/backup_demo_quote.py --org servomex [--dry-run] # without CCI (sf alias)
+```
+
+The task wraps `scripts/demo/backup_demo_quote.py` and passes it the org
+username. The script uses the sf CLI and never an access token. Each run does
+the following:
+
+1. **Checks the Quote Contact.** Lars Eriksson on NordicGas AS must hold a Demo
+   Inbox Address, checked with the same `DemoInboxAddress` action. If he
+   doesn't, the run stops and tells you to run
+   `rewrite_contact_emails_to_demo_inbox` first.
+2. **Ensures the Opportunity.** *NordicGas AS — Analyser Upgrade (Backup Demo)*
+   is created when missing, in the Account's currency (USD).
+3. **Ensures the Quote.** *NordicGas AS — Backup Demo Quote* is created through
+   Place Sales Transaction, so the pricing engine prices it. Lars is the Quote
+   Contact, and it expires 30 days out. The lines are 1 × SERVOPRO 4900
+   Multigas Analyser (`SMX-4900-MG`) and 2 × Calibration Gas Kit
+   (`SMX-SPA-CALG`), USD 48,070. The SERVOFLEX Mini MP is deliberately left
+   out, because its model changes often.
+4. **On later runs,** it reuses the same Quote and resets it to **Draft**. It
+   also restores Lars as Quote Contact if he was changed, and extends a lapsed
+   expiration date. Nothing is deleted, so earlier Proposal Files and logged
+   emails stay on the Quote.
+
+The Opportunity and Quote are found by name, so don't rename them. If the run
+finds two records with the backup name, or a backup Quote with no priced lines,
+it stops. Delete the extra or broken record by hand and re-run.
+
 ## Manual check
 
 There's no automated test, because document generation is asynchronous and

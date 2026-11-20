@@ -74,7 +74,7 @@ private class DemoInboxAddressTest {
 
     @IsTest
     static void existingDemoInboxAddressIsUnchangedAndBlocksReuseOfItsAlias() {
-        String existingAddress = 'Martin.Biondi+lars.eriksson@PierceWashington.com';
+        String existingAddress = 'martin.biondi+lars.eriksson@piercewashington.com';
         Contact existing = contact('Lars', 'Demo', existingAddress);
         Contact lars = contact('Lars', 'Eriksson', NORDICGAS_LARS);
         insertContacts(new List<Contact>{ existing, lars });
@@ -135,7 +135,7 @@ private class DemoInboxAddressTest {
             'x.martin.biondi+lars@piercewashington.com',
             'martin.biondi@piercewashington.com'
         }) {
-            Assert.isFalse(check(address), String.valueOf(address));
+            Assert.isFalse(check(address), 'Refused: ' + address);
         }
     }
 

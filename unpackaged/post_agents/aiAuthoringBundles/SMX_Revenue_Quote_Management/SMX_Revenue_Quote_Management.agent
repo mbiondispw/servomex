@@ -322,6 +322,7 @@ subagent QuoteManagement:
                 - After applying, report per-line and overall results using product names, not raw IDs.
               - Quote sync/unsync: use GetRecordDetails to resolve related opportunity, then update only SyncedQuoteId through UpdateRecordFields.
               Response guidance:
+              - After the last AddQuoteLineItemToQuote call, run GetRecordDetails on the quote and take every line price and the quote total only from that result; never report prices or totals from an earlier snapshot.
               - After creating a quote and adding lines, reply with the lines (product, quantity, price), the quote total, and links to the opportunity and the quote, like [Quote](/{quoteId}). For update/sync operations, use concise confirmations with the same links.
               - Use human-readable names as link text whenever available.
               - Do not ask the same clarifying question repeatedly.

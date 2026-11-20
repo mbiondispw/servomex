@@ -32,13 +32,13 @@ first when the org is shared.
 
 ```bash
 SMX=/path/to/servomex/unpackaged/post_agents
-cd /path/to/rlm-base-dev
+RLM=/path/to/rlm-base-dev
 
-cci task run deploy_agents   --org servomex -o path         $SMX/aiAuthoringBundles
-cci task run publish_agents  --org servomex -o bundles_path $SMX/aiAuthoringBundles
-cci task run activate_agents --org servomex -o bundles_path $SMX/aiAuthoringBundles
+(cd $RLM && cci task run deploy_agents   --org servomex -o path         $SMX/aiAuthoringBundles)
+(cd $RLM && cci task run publish_agents  --org servomex -o bundles_path $SMX/aiAuthoringBundles)
+(cd $RLM && cci task run activate_agents --org servomex -o bundles_path $SMX/aiAuthoringBundles)
 # The permission set's agentAccesses needs the published Bot, so deploy it last:
-cci task run deploy_agent_permission_sets --org servomex -o path $SMX/permissionsets
+(cd $RLM && cci task run deploy_agent_permission_sets --org servomex -o path $SMX/permissionsets)
 ```
 
 To change an active agent, re-run `publish_agents` (it creates a new version),
@@ -56,8 +56,10 @@ sf org assign permset -o <sf-alias> -n SMX_QuotingAgent -b <username> [-b <usern
 ## Test
 
 The agent test needs the Service Upsell products from the `servomex-services`
-plan (#55), plus the fixture account and opportunity. Agent tests cost Flex
-Credits; run only the specs you need.
+plan (#55) **and a rebuilt product catalog index**: until the index includes
+them, the standard add-line flow answers "Could not find product with ID".
+It also needs the fixture account and opportunity. Agent tests cost Flex
+Credits; run only the specs you need. Run these from this repo's root.
 
 ```bash
 # 1. Fixture: GBP account "Service Upsell Test Customer" and its open
@@ -65,7 +67,7 @@ Credits; run only the specs you need.
 sf apex run -o <sf-alias> -f scripts/apex/smxServiceUpsellFixture.apex
 
 # 2. Agent test (from rlm-base-dev).
-cci task run test_agents --org servomex -o tests_path $SMX/tests/smx-quote-agent
+(cd $RLM && cci task run test_agents --org servomex -o tests_path $SMX/tests/smx-quote-agent)
 
 # 3. Records check: 2 x SMX-SVC-TRN-DAY and 1 x SMX-SVC-SAT at 1606.80 from the
 #    GBP price book entry, quote TotalPrice 4820.40.

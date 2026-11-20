@@ -274,8 +274,10 @@ def validate(manifest):
             raise ManifestError("target.option_adders: must be a mapping")
         for key in ("schedule", "selling_model", "currency", "effective_from", "price_impacting"):
             require(option_adders, key, "target.option_adders")
-        if not isinstance(option_adders["price_impacting"], list):
-            raise ManifestError("target.option_adders: price_impacting must be a list of attribute ids")
+        if not isinstance(option_adders["price_impacting"], list) or not option_adders["price_impacting"]:
+            raise ManifestError(
+                "target.option_adders: price_impacting must be a non-empty list of attribute ids"
+            )
 
     plan = manifest.get("plan")
     if not isinstance(plan, dict):

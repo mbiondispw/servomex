@@ -251,4 +251,4 @@ identity field, so it is the single object matched by traversal.
 
 - `.cursor/skills/sfdmu-data-plans/SKILL.md` — SFDMU v5 rules and known bugs
 - `.cursor/skills/revenue-cloud-data-model/SKILL.md` — RLM object relationships
-- `CONTEXT.md` — canonical SAP-to-Revenue-Cloud vocabulary
+- `GLOSSARY.md` — canonical SAP-to-Revenue-Cloud vocabulary

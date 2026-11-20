@@ -1,4 +1,4 @@
-# CONTEXT
+# GLOSSARY
 
 Canonical vocabulary for this repository. Use these terms in issues, proposals,
 tests, and code. Implementation rules live in the skills that own each topic,

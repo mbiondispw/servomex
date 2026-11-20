@@ -103,6 +103,36 @@ def build_adders(manifest, characteristics):
     return rows
 
 
+def retire_dropped(previous_csv, rows, sku):
+    """Carry rows the manifest no longer prices forward as inactive.
+
+    The plan only upserts, so a row that is simply left out stays active in the
+    org and keeps adding its old price. The committed plan is the ledger: a
+    dropped code is rewritten with Is_Active__c false, and becomes active again
+    if the value is priced later.
+    """
+    if not previous_csv.exists():
+        return []
+    current = {row["Code__c"] for row in rows}
+    with previous_csv.open(encoding="utf-8", newline="") as handle:
+        previous = list(csv.DictReader(handle))
+    retired = []
+    for row in previous:
+        if row["Code__c"] in current or row.get("Product__r.StockKeepingUnit") != sku:
+            continue
+        attribute, _, value = row["Name"].partition(": ")
+        retired.append(
+            {
+                **{column: row.get(column, "") for column in ADDER_COLUMNS},
+                "Is_Active__c": "false",
+                "_attribute": attribute,
+                "_value": value,
+                "_amount": "retired",
+            }
+        )
+    return sorted(retired, key=lambda row: row["Code__c"])
+
+
 def source_reference(source):
     """Workbook prices cite Sheet!Cell; SAP prices cite their page."""
     if source.get("cell"):
@@ -136,7 +166,8 @@ def default_output_dir(manifest):
 def render_readme(manifest, manifest_path, rows):
     target = manifest["target"]
     currency = target["option_adders"]["currency"]
-    attribute_count = len({row["Attribute_Definition__r.Code"] for row in rows})
+    active = [row for row in rows if row["Is_Active__c"] == "true"]
+    attribute_count = len({row["Attribute_Definition__r.Code"] for row in active})
     plan_dir = default_output_dir(manifest)
     lines = [
         f"# Option Adder matrix: {target.get('product_classification_name') or target['product_sku']} "
@@ -152,7 +183,7 @@ def render_readme(manifest, manifest_path, rows):
         "",
         "## What it loads",
         "",
-        f"{len(rows)} Option Adders across {attribute_count} attributes, in {currency}. Each row is one",
+        f"{len(active)} Option Adders across {attribute_count} attributes, in {currency}. Each row is one",
         "`Option_Adder__c`: product + attribute + picklist value -> a flat amount. Every priced",
         "value is here, whether or not its attribute is price-impacting, because the Price",
         "Adjustment Matrix reads the line's selected values directly. The adjustment value is",
@@ -201,7 +232,10 @@ def render_readme(manifest, manifest_path, rows):
         "  update rows and never duplicate them. No object uses `deleteOldData`.",
         "- `Product2`, `AttributeDefinition` and `AttributePicklistValue` are `Readonly`: the plan",
         "  only resolves lookups to them.",
-        "- Retire an adder by setting `Is_Active__c` to false; the decision table reads active rows only.",
+        "- To retire an adder, remove its price from the manifest and regenerate over this plan.",
+        "  The generator keeps the row with `Is_Active__c` false (shown as *retired* above), so the",
+        "  next load deactivates it; the decision table reads active rows only. Don't edit rows in",
+        "  the org: the next load overwrites them.",
         "",
     ]
     return "\n".join(lines)
@@ -275,6 +309,7 @@ def main(argv=None):
         return 2
 
     output_dir = args.output_dir or Path(default_output_dir(manifest))
+    rows += retire_dropped(output_dir / f"{ADDER_OBJECT}.csv", rows, manifest["target"]["product_sku"])
     output_dir.mkdir(parents=True, exist_ok=True)
     attributes.write_text(output_dir / "export.json", attributes.render_json(export_plan(manifest)))
     for object_name, (key, values) in parent_tables(rows).items():
@@ -284,7 +319,8 @@ def main(argv=None):
         )
     attributes.write_text(output_dir / f"{ADDER_OBJECT}.csv", render_csv(ADDER_COLUMNS, rows))
     attributes.write_text(output_dir / "README.md", render_readme(manifest, args.manifest, rows))
-    print(f"Generated {len(rows)} Option Adders in {output_dir}")
+    active = sum(1 for row in rows if row["Is_Active__c"] == "true")
+    print(f"Generated {active} Option Adders ({len(rows) - active} retired) in {output_dir}")
     return 0
 
 

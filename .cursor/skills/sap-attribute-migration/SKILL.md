@@ -291,6 +291,10 @@ python scripts/ai/generate_option_adder_matrix.py \
 tests/test-option-adder-matrix.sh
 ```
 
+Always regenerate over the committed plan directory: a value whose price was
+removed keeps its row with `Is_Active__c = false`, which is how the Upsert-only
+plan retires it.
+
 It reuses this generator's validation, so it rejects the same manifests. Its
 metadata (object, decision table, permission set) lives in
 `unpackaged/post_option_adder_matrix/`. The element design, the verification spike

@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Is_Active__c</fullName>
     <defaultValue>true</defaultValue>
-    <description>Only active rows reach the decision table. Retire an adder by clearing this, not by deleting the row.</description>
+    <description>Only active rows reach the decision table. The generator sets it false for an adder whose price was removed from the manifest; do not edit it by hand.</description>
     <externalId>false</externalId>
     <label>Active</label>
     <type>Checkbox</type>

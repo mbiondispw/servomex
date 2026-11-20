@@ -50,6 +50,13 @@ change a price, edit the manifest and run:
 python scripts/ai/generate_option_adder_matrix.py --manifest datasets/sap/servomex-05230a1/manifest.yaml
 ```
 
+**Retiring an adder.** The plan only upserts; nothing deletes. A row that was
+simply left out would stay active in the org and keep adding its old price. So the
+committed plan acts as the ledger: when a value loses its price, regeneration keeps
+its row with `Is_Active__c = false`, and the next load deactivates it. Pricing the
+value again makes the row active. Always regenerate over the committed plan
+directory, and don't edit rows in the org, because the next load overwrites them.
+
 The object, decision table and permission set are hand-authored. They hold no
 product data, so one table serves every product that gets Option Adders.
 
@@ -64,7 +71,7 @@ product data, so one table serves every product that gets Option Adders.
 | `CurrencyIsoCode` | Decision table input. Rows are GBP, so a quote in another currency matches nothing. |
 | `Adjustment_Type__c` | `Amount`. Mapped to the element's `AdjustmentType`. |
 | `Adjustment_Value__c` | Minus the adder, e.g. `-1292`. Mapped to the element's `AdjustmentValue`. |
-| `Is_Active__c` | The decision table reads active rows only. Retire a row by clearing this flag rather than deleting it. |
+| `Is_Active__c` | The decision table reads active rows only. The generator sets it; see *Retiring an adder*. |
 | `Source_Reference__c` | Workbook cell of the price, e.g. `Product Config and Pricing!F13`. |
 
 The picklist value alone identifies the attribute, because a priced value always
@@ -131,7 +138,7 @@ shipped procedures stay untouched.
 | | Resolution Strategy | a Text constant `ResolutionStrategyOptionAdders` = `Option_Adder_Stack` |
 | | Use As List | `Attribute_Picklist_Value__c` |
 | Output variables | Net Unit Price | `NetUnitPrice` |
-| | Include in Output | on, so each adder shows in the price waterfall |
+| | Include in Output | on (whether each adder gets its own waterfall entry is spike step 3) |
 
 The `AdjustmentTypeField` and `AdjustmentValueField` parameters are Text
 constants holding `Adjustment_Type__c` and `Adjustment_Value__c`. This follows the
@@ -152,8 +159,9 @@ Discount, because #32 discounts the full configured price, base plus every adder
 ### How the 10 lookups stack
 
 One element performs every lookup. The line's attribute node contributes one
-picklist value per attribute, so a Mini MP line passes 15 values in the list. Each
-is looked up with the line's product and currency:
+picklist value per attribute that has one, so a Mini MP line passes up to 15 values
+in the list. An unset attribute, such as Probe Holder without a side panel, passes
+nothing. Each value is looked up with the line's product and currency:
 
 - an unpriced value (UK Mains, Not Supplied, None…) matches no row and adds nothing;
 - a priced value matches exactly one row;

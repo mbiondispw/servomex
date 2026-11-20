@@ -64,7 +64,6 @@
     <filterResultBy>OutputOrder</filterResultBy>
     <hasIncrementalSyncFailed>false</hasIncrementalSyncFailed>
     <isIncrementalSyncEnabled>false</isIncrementalSyncEnabled>
-    <isVersioned>false</isVersioned>
     <setupName>Option Adder Matrix</setupName>
     <sourceConditionLogic>1</sourceConditionLogic>
     <sourceObject>Option_Adder__c</sourceObject>

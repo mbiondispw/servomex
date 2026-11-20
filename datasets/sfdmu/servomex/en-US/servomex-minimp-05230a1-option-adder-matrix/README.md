@@ -79,4 +79,7 @@ refreshes `Option_Adder_Matrix` after this load.
   update rows and never duplicate them. No object uses `deleteOldData`.
 - `Product2`, `AttributeDefinition` and `AttributePicklistValue` are `Readonly`: the plan
   only resolves lookups to them.
-- Retire an adder by setting `Is_Active__c` to false; the decision table reads active rows only.
+- To retire an adder, remove its price from the manifest and regenerate over this plan.
+  The generator keeps the row with `Is_Active__c` false (shown as *retired* above), so the
+  next load deactivates it; the decision table reads active rows only. Don't edit rows in
+  the org: the next load overwrites them.

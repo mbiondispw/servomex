@@ -205,6 +205,60 @@ else
 fi
 
 echo ""
+echo "Test 7: removing a price retires its row on the next load instead of dropping it"
+RETIRED_FIXTURE="$WORK_DIR/retired.yaml"
+"$PYTHON" -c '
+import sys, yaml
+manifest = yaml.safe_load(open(sys.argv[1]))
+for node in manifest["characteristics"]:
+    if node["id"] == "TRANSPORT_CASE":
+        for value in node["values"]:
+            value.pop("price", None)
+yaml.safe_dump(manifest, open(sys.argv[2], "w"), sort_keys=False)
+' "$FIXTURES/approved-stacking.yaml" "$RETIRED_FIXTURE"
+RUN_R="$WORK_DIR/run-r"
+cp -R "$RUN_A" "$RUN_R"
+"$PYTHON" "$GENERATOR" --manifest "$RETIRED_FIXTURE" --output-dir "$RUN_R" >"$WORK_DIR/run-r.log" 2>&1
+assert_equals "$?" "0" "regenerating over the previous plan succeeds"
+assert_contains "$RUN_R/Option_Adder__c.csv" \
+    "SMX-05230A1-TRANSPORT_CASE-1-05230A1-GBP,Transport Case: Supplied,05230A1,SMX-05230A1-TRANSPORT_CASE,SMX-05230A1-TRANSPORT_CASE-1,GBP,Amount,-806,false,Product Config and Pricing!F71" \
+    "the unpriced Transport Case row stays in the plan, inactive"
+assert_contains "$RUN_R/Option_Adder__c.csv" "SMX-05230A1-PRINTER-1-05230A1-GBP,Printer: Supplied,05230A1,SMX-05230A1-PRINTER,SMX-05230A1-PRINTER-1,GBP,Amount,-1521,true," \
+    "still-priced rows stay active"
+assert_contains "$RUN_R/AttributePicklistValue.csv" "SMX-05230A1-TRANSPORT_CASE-1" "the retired row's lookup still resolves"
+assert_contains "$RUN_R/README.md" "| Transport Case | Supplied | retired |" "README lists the retired adder"
+"$PYTHON" "$GENERATOR" --manifest "$FIXTURES/approved-stacking.yaml" --output-dir "$RUN_R" >"$WORK_DIR/run-r2.log" 2>&1
+if diff -r "$RUN_A" "$RUN_R" >/dev/null; then
+    pass "pricing the value again reactivates its row"
+else
+    fail "pricing the value again reactivates its row"
+fi
+
+echo ""
+echo "Test 8: a SAP-sourced price cites its page and is namespaced by SAP class and SKU"
+SAP_PRICED="$WORK_DIR/sap-priced.yaml"
+"$PYTHON" -c '
+import sys, yaml
+manifest = yaml.safe_load(open(sys.argv[1]))
+manifest["target"]["option_adders"] = {
+    "schedule": "Standard Attribute Based Adjustment", "selling_model": "One-Time",
+    "currency": "GBP", "effective_from": "2026-01-01T00:00:00.000+0000", "price_impacting": [],
+}
+node = next(n for n in manifest["characteristics"] if n.get("values"))
+value = node["values"][0]
+value["price"] = {"amount": 250, "source": {"page": 7, "text": "250.00"}}
+print(node["id"], value["code"])
+yaml.safe_dump(manifest, open(sys.argv[2], "w"), sort_keys=False)
+' "$SAP_FIXTURES/approved-tracer.yaml" "$SAP_PRICED" >"$WORK_DIR/sap-priced.ids"
+read -r SAP_CHAR SAP_VALUE <"$WORK_DIR/sap-priced.ids"
+RUN_S="$WORK_DIR/run-s"
+"$PYTHON" "$GENERATOR" --manifest "$SAP_PRICED" --output-dir "$RUN_S" >"$WORK_DIR/run-s.log" 2>&1
+assert_equals "$?" "0" "SAP manifest with a price generates"
+assert_contains "$RUN_S/Option_Adder__c.csv" "SAP-CLASS_7930B-$SAP_CHAR-$SAP_VALUE-07930B1-GBP," \
+    "code is the SAP-class value code qualified by the product SKU"
+assert_contains "$RUN_S/Option_Adder__c.csv" ",GBP,Amount,-250,true,page 7" "SAP price cites its page"
+
+echo ""
 echo "========================================="
 echo "Results: $PASS passed, $FAIL failed"
 echo "========================================="

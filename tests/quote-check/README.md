@@ -38,5 +38,27 @@ Append to `scenarios/minimp-05230a1.yaml` (or add a new file and pass
 
 New accounts (for example a `Partner` account) go under `accounts:` with
 `name`, `type` (Account.Type) and `currency`. Expectations the harness cannot
-yet express (price adjustment rows, rejected configurations) need a small
-extension to `check()` in `quote_check.py`.
+yet express (price adjustment rows) need a small extension to `check()` in
+`quote_check.py`.
+
+### Rejected configurations
+
+A scenario whose combination the Constraint Model must refuse uses
+`expect.rejected` instead of `expect.lines`:
+
+```yaml
+  expect:
+    rejected:
+      message: Measurement 2 cannot repeat   # optional substring of the conflict message
+```
+
+Place Sales Transaction never refuses on configuration rules. It keeps a
+conflicting request, or silently resolves it. So the harness places the quote,
+then runs the configurator `configure` action on each line:
+
+- The scenario passes if `configure` reports the conflict, and the conflict
+  includes `message` when one is given.
+- Without a `message`, it also passes if the org replaced the requested values
+  with other values (the combination is unavailable).
+- It fails if the requested combination was kept, if a requested attribute came
+  back empty, or if the model itself failed to run.

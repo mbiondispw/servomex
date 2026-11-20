@@ -43,6 +43,8 @@ CALCULATED = {"CompletedWithPricing", "CompletedWithTax", "CompletedWithoutPrici
 POLL_SECONDS = 3
 POLL_TIMEOUT = 180
 MONEY_TOLERANCE = Decimal("0.005")
+# A refusal containing one of these is the model failing, not a rule rejecting.
+MODEL_FAILURE_MARKERS = ("INTERNAL_SERVER_ERROR", "Deploy failed", "is invalid", "is not found in pick list")
 
 
 class CheckError(RuntimeError):
@@ -299,12 +301,80 @@ def load_scenarios(path):
                 raise SystemExit(f"error: {path}: scenario {scenario.get('name', '?')} has no '{key}'")
         if scenario["account"] not in accounts:
             raise SystemExit(f"error: {path}: scenario {scenario['name']} names unknown account '{scenario['account']}'")
+        expect = scenario["expect"] or {}
+        if ("lines" in expect) == ("rejected" in expect):
+            raise SystemExit(f"error: {path}: scenario {scenario['name']} expect needs exactly one of 'lines' or 'rejected'")
+        if "rejected" in expect and expect["rejected"] is None:
+            expect["rejected"] = {}
     return accounts, data.get("scenarios") or []
+
+
+def configurator_refusal(org, quote_id):
+    """Run the configuration rules on each line of a placed quote. Return the
+    configurator's error messages joined, or None when every line solves cleanly."""
+    refusals = []
+    for line in query(org, f"SELECT Id FROM QuoteLineItem WHERE QuoteId = '{quote_id}'"):
+        response = rest(org, "/connect/cpq/configurator/actions/configure", "POST", {
+            "transactionId": quote_id,
+            "transactionLineId": line["Id"],
+            "correlationId": f"quote-check-{line['Id']}-{int(time.time())}",
+            "configuratorOptions": {"executeConfigurationRules": True, "validateProductCatalog": True},
+        })
+        if isinstance(response, list):
+            raise CheckError(f"configure rejected: {response[0].get('message', response[0])}")
+        messages = [
+            m.get("message", "")
+            for entries in (response.get("messages") or {}).values()
+            for m in entries
+            if m.get("messageType") == "error"
+        ]
+        messages += [str(e.get("message", e)) for e in response.get("errors") or []]
+        if response.get("solverStatus") == "error" or messages:
+            refusals.append("; ".join(messages) or "solverStatus error")
+    return " | ".join(refusals) if refusals else None
+
+
+def check_rejected(scenario, refusal, lines):
+    """A rejected scenario passes when the configurator reports the conflict (with the
+    expected message, if one is given), or, when no message is required, the org did
+    not keep the requested combination and replaced it with other values."""
+    message = scenario["expect"]["rejected"].get("message")
+    if refusal is not None and any(marker in refusal for marker in MODEL_FAILURE_MARKERS):
+        return [(False, f"configuration rules failed to run, so nothing was judged: {refusal}")]
+    if refusal is not None:
+        if message is None:
+            return [(True, f"org refused the configuration: {refusal}")]
+        return [(message in refusal, f"refusal says {message!r} (got {refusal!r})")]
+    if message is not None:
+        return [(False, f"org accepted the configuration; expected refusal saying {message!r}")]
+    dropped = []
+    for index, requested in enumerate(scenario["lines"]):
+        matching = [line for line in lines if line["Product2"]["StockKeepingUnit"] == requested["sku"]]
+        actual = matching[0]["attributes"] if matching else {}
+        dropped += [
+            f"{code} = {actual.get(code)!r} (requested {value!r})"
+            for code, value in (requested.get("attributes") or {}).items()
+            if actual.get(code) != value
+        ]
+        # A broken model leaves attributes empty; that is not the rules replacing a value.
+        nulled = [code for code in (requested.get("attributes") or {}) if actual.get(code) is None]
+        if nulled:
+            return [(False, "requested attributes came back empty: " + ", ".join(nulled))]
+    if dropped:
+        return [(True, "requested combination not kept: " + "; ".join(dropped))]
+    return [(False, "org accepted and kept the requested combination")]
 
 
 def run_scenario(org, scenario, accounts):
     account = accounts[scenario["account"]]
     account_id = ensure_account(org, account)
+    if "rejected" in scenario["expect"]:
+        # Place never refuses on configuration rules: it keeps or silently resolves a
+        # conflicting request, so its errors are failures and the configurator judges.
+        quote_id = place_quote(org, scenario, account_id, account["currency"])
+        status = wait_until_calculated(org, quote_id)
+        refusal = configurator_refusal(org, quote_id)
+        return quote_id, status, check_rejected(scenario, refusal, priced_lines(org, quote_id, set()))
     quote_id = place_quote(org, scenario, account_id, account["currency"])
     status = wait_until_calculated(org, quote_id)
     fields = {field for line in scenario["expect"]["lines"] for field in (line.get("fields") or {})}

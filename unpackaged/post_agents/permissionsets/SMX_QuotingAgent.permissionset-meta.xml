@@ -6,7 +6,11 @@
         <agentName>SMX_Revenue_Quote_Management</agentName>
         <enabled>true</enabled>
     </agentAccesses>
-    <description>Agent Access to the Servomex Quote Agent (SMX_Revenue_Quote_Management), plus the object access its quote actions need.</description>
+    <description>Agent Access to the Servomex Quote Agent (SMX_Revenue_Quote_Management), plus the object and flow access its quote actions need.</description>
+    <flowAccesses>
+        <enabled>true</enabled>
+        <flow>SMX_Create_Opportunity</flow>
+    </flowAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>SMX Quoting Agent</label>
     <objectPermissions>

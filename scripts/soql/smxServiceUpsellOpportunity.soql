@@ -1,0 +1,1 @@
+SELECT Name, StageName, CloseDate, CurrencyIsoCode, Pricebook2.Name, NextStep, CreatedDate, (SELECT Name, TotalPrice FROM Quotes) FROM Opportunity WHERE Account.Name = 'Service Upsell Test Customer' ORDER BY CreatedDate DESC

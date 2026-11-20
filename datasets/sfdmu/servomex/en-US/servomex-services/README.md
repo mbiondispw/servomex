@@ -63,8 +63,8 @@ rm -rf datasets/sfdmu/servomex/en-US/servomex-services/{reports,source,target}
 
 ## Post-load: rebuild the catalog search index
 
-Product search, and Place Sales Transaction's catalog validation, only see the
-products once the Product Catalog search index is rebuilt. From `rlm-base-dev`:
+Product search only finds the products once the Product Catalog search index is
+rebuilt. From `rlm-base-dev`:
 
 ```bash
 cci task run rebuild_search_index --org <cci-alias> -o build_type FULL -o raise_on_failure True
@@ -74,6 +74,23 @@ The build is asynchronous; allow several minutes. Try `-o build_type INCREMENTAL
 first when the index was rebuilt recently; the org rejects an incremental build
 ("Too much time has elapsed since you last reindexed") after a long gap. Check
 the build with `GET /services/data/v66.0/connect/pcm/index/snapshots`.
+
+## Post-load: refresh the price book entry decision table
+
+Pricing reads price book entries from the `Price_Book_Entry_Decision_Table_v2`
+decision table, not from `PricebookEntry` directly, and incremental sync is off.
+Until it is refreshed, Place Sales Transaction rejects the new products with
+`Could not find product with ID: …`, and product discovery shows no price. From
+`rlm-base-dev`:
+
+```bash
+cci task run refresh_dt_default_pricing --org <cci-alias> \
+    -o developerNames Price_Book_Entry_Decision_Table_v2
+```
+
+The refresh is asynchronous and usually completes in under a minute. Check
+`SELECT RefreshStatus, LastSyncDate FROM DecisionTable WHERE DeveloperName =
+'Price_Book_Entry_Decision_Table_v2'`.
 
 ## Verify
 

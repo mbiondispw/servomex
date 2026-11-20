@@ -1,0 +1,12 @@
+Code,Name,DisplayValue,Value,Abbreviation,Picklist.Code,Sequence,IsDefault,Status
+SMX-05230A1-CONFIGURATION-A,User Configured,User Configured,User Configured,A,SMX-05230A1-CONFIGURATION-PL,1,false,Active
+SMX-05230A1-CONFIGURATION-B,Standard Variant (SV01),Standard Variant (SV01),Standard Variant (SV01),B,SMX-05230A1-CONFIGURATION-PL,2,false,Active
+SMX-05230A1-CONFIGURATION-C,Standard Variant (SV02),Standard Variant (SV02),Standard Variant (SV02),C,SMX-05230A1-CONFIGURATION-PL,3,false,Active
+SMX-05230A1-CONFIGURATION-D,Standard Variant (SV03),Standard Variant (SV03),Standard Variant (SV03),D,SMX-05230A1-CONFIGURATION-PL,4,false,Active
+SMX-05230A1-CONFIGURATION-E,Standard Variant (SV04),Standard Variant (SV04),Standard Variant (SV04),E,SMX-05230A1-CONFIGURATION-PL,5,false,Active
+SMX-05230A1-SUPPLY_POWER-1,UK Mains,UK Mains,UK Mains,1,SMX-05230A1-SUPPLY_POWER-PL,1,false,Active
+SMX-05230A1-SUPPLY_POWER-2,US Mains,US Mains,US Mains,2,SMX-05230A1-SUPPLY_POWER-PL,2,false,Active
+SMX-05230A1-SUPPLY_POWER-3,European Mains,European Mains,European Mains,3,SMX-05230A1-SUPPLY_POWER-PL,3,false,Active
+SMX-05230A1-SUPPLY_POWER-5,Rechargeable Battery UK,Rechargeable Battery UK,Rechargeable Battery UK,5,SMX-05230A1-SUPPLY_POWER-PL,4,false,Active
+SMX-05230A1-SUPPLY_POWER-6,Rechargeable Battery US,Rechargeable Battery US,Rechargeable Battery US,6,SMX-05230A1-SUPPLY_POWER-PL,5,false,Active
+SMX-05230A1-SUPPLY_POWER-7,Rechargeable Battery Euro,Rechargeable Battery Euro,Rechargeable Battery Euro,7,SMX-05230A1-SUPPLY_POWER-PL,6,false,Active

@@ -40,6 +40,10 @@ except ImportError:  # pragma: no cover - environment guard
 API_VERSION = "66.0"
 
 DISPOSITIONS = {"generated", "excluded", "deferred", "superseded", "source-control"}
+
+# Where provenance points inside each kind of source document. A SAP
+# classification export is cited by page; a Workbook Source by sheet and cell.
+PROVENANCE_KEYS = {"sap": ("page",), "workbook": ("sheet", "cell")}
 GENERATED_DATA_TYPES = {"Picklist", "Text", "Number", "Checkbox", "Date", "DateTime"}
 
 # Raw SAP option codes are reused across characteristics, so they can never be
@@ -122,7 +126,19 @@ def validate_approval(manifest):
     require(approval, "approved_on", "approval")
 
 
-def validate_node(node, context):
+def source_kind(manifest):
+    return manifest["source"].get("kind", "sap")
+
+
+def validate_provenance(provenance, kind, context):
+    if not isinstance(provenance, dict) or not provenance.get("text"):
+        raise ManifestError(f"{context}: missing source.text provenance")
+    for key in PROVENANCE_KEYS[kind]:
+        if provenance.get(key) in (None, ""):
+            raise ManifestError(f"{context}: missing source.{key} provenance")
+
+
+def validate_node(node, context, kind):
     require(node, "id", context)
     require(node, "label", context)
     disposition = require(node, "disposition", context)
@@ -131,11 +147,7 @@ def validate_node(node, context):
             f"{context}: unknown disposition '{disposition}'. "
             f"Expected one of {sorted(DISPOSITIONS)}"
         )
-    provenance = node.get("source")
-    if not isinstance(provenance, dict) or not provenance.get("text"):
-        raise ManifestError(f"{context}: missing source.text provenance")
-    if provenance.get("page") is None:
-        raise ManifestError(f"{context}: missing source.page provenance")
+    validate_provenance(node.get("source"), kind, context)
     return disposition
 
 
@@ -160,13 +172,31 @@ def validate(manifest):
     source = manifest.get("source")
     if not isinstance(source, dict):
         raise ManifestError("source: missing source block")
-    for key in ("system", "document", "sap_product", "sap_class"):
+    kind = source_kind(manifest)
+    if kind not in PROVENANCE_KEYS:
+        raise ManifestError(
+            f"source: unknown kind '{kind}'. Expected one of {sorted(PROVENANCE_KEYS)}"
+        )
+    required = ["system", "document", "sap_product"]
+    if kind == "sap":
+        required.append("sap_class")
+    for key in required:
         require(source, key, "source")
 
     target = manifest.get("target")
     if not isinstance(target, dict):
         raise ManifestError("target: missing target block")
     require(target, "product_sku", "target")
+    list_price = target.get("list_price")
+    if list_price is not None:
+        if not isinstance(list_price, dict):
+            raise ManifestError("target.list_price: must be a mapping")
+        for key in ("amount", "currency", "pricebook", "selling_model"):
+            require(list_price, key, "target.list_price")
+        amount = list_price["amount"]
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount < 0:
+            raise ManifestError("target.list_price: amount must be a non-negative number")
+        validate_provenance(list_price.get("source"), kind, "target.list_price")
 
     plan = manifest.get("plan")
     if not isinstance(plan, dict):
@@ -188,7 +218,7 @@ def validate(manifest):
     picklists = {}
     for index, node in enumerate(manifest.get("picklists") or []):
         context = f"picklists[{index}] ({node.get('id', '?')})"
-        disposition = validate_node(node, context)
+        disposition = validate_node(node, context, kind)
         claim(node, "picklist", context)
         picklists[node["id"]] = node
         validate_values(node, context)
@@ -202,14 +232,14 @@ def validate(manifest):
     categories = {}
     for index, node in enumerate(manifest.get("categories") or []):
         context = f"categories[{index}] ({node.get('id', '?')})"
-        validate_node(node, context)
+        validate_node(node, context, kind)
         claim(node, "category", context)
         categories[node["id"]] = node
 
     characteristics = {}
     for index, node in enumerate(manifest.get("characteristics") or []):
         context = f"characteristics[{index}] ({node.get('id', '?')})"
-        disposition = validate_node(node, context)
+        disposition = validate_node(node, context, kind)
         claim(node, "characteristic", context)
         characteristics[node["id"]] = node
 
@@ -268,6 +298,15 @@ def validate(manifest):
                 f"Set type: Picklist, or drop the values from this '{data_type}' characteristic."
             )
         validate_values(node, context)
+        default_value = node.get("default_value")
+        if default_value and data_type == "Picklist":
+            options = retained_values(picklists[shared] if shared else node)
+            if ascii_normalize(default_value) not in {
+                ascii_normalize(value["label"]) for value in options
+            }:
+                raise ManifestError(
+                    f"{context}: default_value '{default_value}' is not a retained value label"
+                )
 
     for node in characteristics.values():
         if node["disposition"] == "superseded":
@@ -296,9 +335,11 @@ def retained_values(characteristic):
 def build_records(manifest, picklists, categories, characteristics):
     source = manifest["source"]
     system = source["system"]
-    sap_class = source["sap_class"]
+    is_workbook = source_kind(manifest) == "workbook"
+    # A workbook has no SAP Class, so its codes are namespaced by the SAP material.
+    namespace = source["sap_product"] if is_workbook else source["sap_class"]
     sku = manifest["target"]["product_sku"]
-    prefix = qualify(system, sap_class)
+    prefix = qualify(system, namespace)
 
     generated_categories = [
         node for node in categories.values() if node["disposition"] == "generated"
@@ -358,7 +399,7 @@ def build_records(manifest, picklists, categories, characteristics):
         {
             "Code": classification_code,
             "Name": ascii_normalize(
-                manifest["target"].get("product_classification_name") or sap_class
+                manifest["target"].get("product_classification_name") or namespace
             ),
             "ParentProductClassification.Code": "",
             "Status": "Active",
@@ -390,7 +431,8 @@ def build_records(manifest, picklists, categories, characteristics):
             picklist_code = emit_picklist(
                 char_id,
                 label,
-                f"Permitted-value set for SAP characteristic {char_id}",
+                f"Permitted-value set for "
+                f"{'workbook attribute' if is_workbook else 'SAP characteristic'} {char_id}",
                 values,
             )
 
@@ -399,7 +441,9 @@ def build_records(manifest, picklists, categories, characteristics):
                 "Code": attribute_code,
                 "Name": f"{label} ({char_id})",
                 "Label": label,
-                "DeveloperName": developer_name(char_id),
+                # SAP characteristic ids are unique across SAP; workbook attribute
+                # ids are unique only within their workbook, so qualify them.
+                "DeveloperName": developer_name(attribute_code if is_workbook else char_id),
                 "DataType": characteristic["type"],
                 "Description": ascii_normalize(characteristic.get("description", "")),
                 "IsActive": "true",
@@ -464,6 +508,21 @@ def build_records(manifest, picklists, categories, characteristics):
         {"StockKeepingUnit": sku, "BasedOn.Code": classification_code}
     )
 
+    list_price = manifest["target"].get("list_price")
+    if list_price:
+        identity = [sku, list_price["pricebook"], list_price["selling_model"], list_price["currency"]]
+        tables["PricebookEntry"].append(
+            {
+                PRICEBOOK_ENTRY_IDENTITY: ";".join(str(part) for part in identity),
+                "Product2.StockKeepingUnit": sku,
+                "Pricebook2.Name": list_price["pricebook"],
+                "ProductSellingModel.Name": list_price["selling_model"],
+                "CurrencyIsoCode": list_price["currency"],
+                "UnitPrice": format_amount(list_price["amount"]),
+                "IsActive": "true",
+            }
+        )
+
     duplicates = find_duplicate_codes(tables)
     if duplicates:
         raise ManifestError(
@@ -481,6 +540,18 @@ def build_records(manifest, picklists, categories, characteristics):
     return tables, warnings
 
 
+PRICEBOOK_ENTRY_IDENTITY = (
+    "$$Product2.StockKeepingUnit$Pricebook2.Name$ProductSellingModel.Name$CurrencyIsoCode"
+)
+
+
+def format_amount(amount):
+    """Render a price without float noise: 4500 -> '4500', 1292.5 -> '1292.5'."""
+    if isinstance(amount, float) and amount.is_integer():
+        amount = int(amount)
+    return str(amount)
+
+
 IDENTITY_FIELD = {
     "AttributePicklist": "Code",
     "AttributePicklistValue": "Code",
@@ -491,6 +562,7 @@ IDENTITY_FIELD = {
     "ProductClassificationAttr": "Name",
     "Product2": "StockKeepingUnit",
     "ProductAttributeDefinition": "Name",
+    "PricebookEntry": PRICEBOOK_ENTRY_IDENTITY,
 }
 
 
@@ -647,7 +719,15 @@ OBJECT_ORDER = [
     "ProductClassificationAttr",
     "Product2",
     "ProductAttributeDefinition",
+    "PricebookEntry",
 ]
+
+
+def plan_objects(manifest):
+    """Objects this manifest's plan loads, in OBJECT_ORDER. Unpriced plans skip PricebookEntry."""
+    if manifest["target"].get("list_price"):
+        return list(OBJECT_ORDER)
+    return [name for name in OBJECT_ORDER if name != "PricebookEntry"]
 
 CSV_COLUMNS = {
     "AttributePicklist": ["Code", "Name", "DataType", "Description", "Status"],
@@ -717,12 +797,22 @@ CSV_COLUMNS = {
         "Sequence",
         "Status",
     ],
+    "PricebookEntry": [
+        PRICEBOOK_ENTRY_IDENTITY,
+        "Product2.StockKeepingUnit",
+        "Pricebook2.Name",
+        "ProductSellingModel.Name",
+        "CurrencyIsoCode",
+        "UnitPrice",
+        "IsActive",
+    ],
 }
 
 
-def export_objects(sku):
-    """SFDMU object definitions in parent-before-child order."""
-    return [
+def export_objects(manifest):
+    """SFDMU object definitions for the plan, in parent-before-child order."""
+    sku = manifest["target"]["product_sku"]
+    definitions = dict(zip(OBJECT_ORDER, [
         {
             "query": "SELECT Code, DataType, Description, Id, Name, Status "
             "FROM AttributePicklist ORDER BY Code ASC",
@@ -784,7 +874,18 @@ def export_objects(sku):
             "operation": "Upsert",
             "externalId": "Name",
         },
-    ]
+        {
+            "query": "SELECT CurrencyIsoCode, Id, IsActive, Pricebook2Id, Pricebook2.Name, "
+            "Product2Id, Product2.StockKeepingUnit, ProductSellingModelId, "
+            "ProductSellingModel.Name, UnitPrice FROM PricebookEntry "
+            f"WHERE Product2.StockKeepingUnit = '{sku}' "
+            "ORDER BY Pricebook2.Name ASC, ProductSellingModel.Name ASC, CurrencyIsoCode ASC",
+            "operation": "Upsert",
+            "externalId": "Product2.StockKeepingUnit;Pricebook2.Name;"
+            "ProductSellingModel.Name;CurrencyIsoCode",
+        },
+    ]))
+    return [definitions[name] for name in plan_objects(manifest)]
 
 
 def render_json(data):
@@ -810,8 +911,11 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
     nodes = [("picklist", node) for node in picklists.values()]
     nodes += [("category", node) for node in categories.values()]
     nodes += [("characteristic", node) for node in characteristics.values()]
+    is_workbook = source_kind(manifest) == "workbook"
     lines = [
-        "# SAP Product Attribute Conversion Report",
+        "# Product Attribute Conversion Report"
+        if is_workbook
+        else "# SAP Product Attribute Conversion Report",
         "",
         "Generated by `scripts/ai/generate_sap_attribute_migration.py` from the approved manifest.",
         "",
@@ -820,7 +924,7 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         f"| Source system | {source['system']} |",
         f"| Source document | {source['document']} |",
         f"| SAP Product | {source['sap_product']} |",
-        f"| SAP Class | {source['sap_class']} |",
+        "| Source kind | Workbook |" if is_workbook else f"| SAP Class | {source['sap_class']} |",
         f"| Manifest revision | {manifest.get('revision', 'unversioned')} |",
         f"| Approved by | {manifest['approval']['approved_by']} |",
         f"| Approved on | {manifest['approval']['approved_on']} |",
@@ -830,7 +934,7 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
         "| Object | Records |",
         "|--------|---------|",
     ]
-    for object_name in OBJECT_ORDER:
+    for object_name in plan_objects(manifest):
         lines.append(f"| {object_name} | {len(tables[object_name])} |")
 
     lines += [
@@ -957,8 +1061,13 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
     lines += ["", "## Unresolved Source Logic", ""]
     if warnings:
         lines.append(
-            "The source document indicates dependency and variant logic that it does not "
-            "contain. No Revenue Cloud constraints were generated. Generated option "
+            (
+                "The plan does not yet implement every rule the source states. "
+                if is_workbook
+                else "The source document indicates dependency and variant logic that it "
+                "does not contain. "
+            )
+            + "No Revenue Cloud constraints were generated. Generated option "
             "combinations are **not** proven valid."
         )
         lines.append("")
@@ -976,11 +1085,20 @@ def render_plan_readme(manifest, tables, warnings):
     sku = manifest["target"]["product_sku"]
     plan_path = manifest["plan"]["path"].rstrip("/")
     plan_name = plan_path.rsplit("/", 1)[-1]
+    list_price = manifest["target"].get("list_price")
+    is_workbook = source_kind(manifest) == "workbook"
+    if is_workbook:
+        origin = f"workbook `{source['document']}`"
+        namespace = source["sap_product"]
+        node_kind, raw_kind = "attribute", "workbook"
+    else:
+        origin = f"SAP Class `{source['sap_class']}` (`{source['document']}`)"
+        namespace = source["sap_class"]
+        node_kind, raw_kind = "characteristic", "SAP"
     lines = [
         f"# {plan_name} Data Plan",
         "",
-        f"Generated SFDMU plan converting SAP Class `{source['sap_class']}` "
-        f"(`{source['document']}`) into Revenue Cloud attributes for Product `{sku}`.",
+        f"Generated SFDMU plan converting {origin} into Revenue Cloud attributes for Product `{sku}`.",
         "",
         "> **Generated artifact.** Do not edit by hand. Edit the approved manifest and",
         "> re-run `scripts/ai/generate_sap_attribute_migration.py`.",
@@ -988,12 +1106,31 @@ def render_plan_readme(manifest, tables, warnings):
         "## Prerequisites",
         "",
         f"- Product `{sku}` already exists in the target org. This plan never creates Products.",
-        "- SFDMU v5.0.0+ (`sf sfdmu run`).",
+    ]
+    lines += [f"- {item}" for item in manifest["plan"].get("prerequisites") or []]
+    lines += [
+        "- SFDMU v5.6.4+ (`sf sfdmu run`).",
+        "- CumulusCI 4.10.1+, and the target org imported into the `rlm-base-dev` keychain",
+        "  once: `cci org import <sf-alias> <cci-alias>`.",
         "",
         "## Load",
         "",
+        "This project defines no data tasks. The `load_sfdmu_data` task is",
+        "run from a checkout of the sibling `rlm-base-dev` CumulusCI project, pointed at",
+        "this plan by absolute path:",
+        "",
         "```bash",
-        f"cci task run load_sfdmu_data -o pathtoexportjson {plan_path} --org <alias>",
+        "cd <rlm-base-dev>",
+        "cci task run load_sfdmu_data --org <cci-alias> \\",
+        f"    -o pathtoexportjson <this-repo>/{plan_path}",
+        "```",
+        "",
+        "The task writes the org's credentials into `export.json` while it runs and leaves",
+        "the file reformatted afterwards. Never commit it mid-load; restore it after the",
+        "load with:",
+        "",
+        "```bash",
+        f"git checkout -- {plan_path}/export.json",
         "```",
         "",
         "## Objects",
@@ -1005,7 +1142,7 @@ def render_plan_readme(manifest, tables, warnings):
         "|---|--------|-----------|-------------|---------|",
     ]
     for index, (object_name, definition) in enumerate(
-        zip(OBJECT_ORDER, export_objects(sku)), start=1
+        zip(plan_objects(manifest), export_objects(manifest)), start=1
     ):
         lines.append(
             f"| {index} | {object_name} | {definition['operation']} | "
@@ -1017,21 +1154,39 @@ def render_plan_readme(manifest, tables, warnings):
         "## Identity Strategy",
         "",
         "Generated codes are source-qualified as "
-        f"`{source['system']}-{source['sap_class']}-<characteristic>[-<value>]` so that repeated",
-        "raw SAP codes such as `A`, `X`, `1`, and `2` cannot collide globally. The raw SAP",
-        "option code is preserved in `AttributePicklistValue.Abbreviation`, and the raw SAP",
-        "characteristic id in `AttributeDefinition.SourceSystemIdentifier`.",
+        f"`{source['system']}-{namespace}-<{node_kind}>[-<value>]` so that repeated",
+        f"raw {raw_kind} codes such as `A`, `X`, `1`, and `2` cannot collide globally. The raw {raw_kind}",
+        f"option code is preserved in `AttributePicklistValue.Abbreviation`, and the raw {raw_kind}",
+        f"{node_kind} id in `AttributeDefinition.SourceSystemIdentifier`.",
         "",
         "`ProductClassificationAttr` and `ProductAttributeDefinition` use generated `Name`",
         "values as direct external ids, because SFDMU v5 cannot reliably upsert on external",
         "ids composed only of relationship traversals. `AttributeCategoryAttribute` has no",
         "direct identity field, so it is the one object matched by traversal.",
+    ]
+    if list_price:
+        lines += [
+            "",
+            "`PricebookEntry` has no direct identity field either. It matches on SKU, price",
+            "book, selling model, and currency, which SFDMU 5.6.4+ matches under `Upsert`.",
+        ]
+    lines += [
         "",
         "## Safety",
         "",
         "- No object uses `deleteOldData`. Nothing in this plan deletes org records.",
         f"- `Product2` uses `Update`, scoped to `StockKeepingUnit = '{sku}'`, and writes only",
         "  `BasedOn.Code`. No other Product field is touched, and no Product is created.",
+    ]
+    if list_price:
+        lines += [
+            "- `PricebookEntry` uses `Upsert`, scoped to `Product2.StockKeepingUnit = "
+            f"'{sku}'`. It sets the",
+            f"  {list_price['currency']} `{list_price['selling_model']}` entry in "
+            f"`{list_price['pricebook']}` to {format_amount(list_price['amount'])}, "
+            "updating the existing entry in place.",
+        ]
+    lines += [
         "",
         "## Validate",
         "",
@@ -1044,9 +1199,13 @@ def render_plan_readme(manifest, tables, warnings):
     ]
     if warnings:
         lines.append(
-            "The source document references logic it does not contain. No Revenue Cloud "
-            "constraints were generated, so loading this plan does **not** make every "
-            "generated option combination valid."
+            (
+                "The plan does not yet implement every rule the source states. "
+                if is_workbook
+                else "The source document references logic it does not contain. "
+            )
+            + "No Revenue Cloud constraints were generated, so loading this plan does "
+            "**not** make every generated option combination valid."
         )
         lines.append("")
         for warning in warnings:
@@ -1094,13 +1253,12 @@ def main(argv=None):
 
     output_dir = args.output_dir or Path(manifest["plan"]["path"])
     output_dir.mkdir(parents=True, exist_ok=True)
-    sku = manifest["target"]["product_sku"]
 
     write_text(
         output_dir / "export.json",
         render_json(
             {
-                "objects": export_objects(sku),
+                "objects": export_objects(manifest),
                 "apiVersion": API_VERSION,
                 # Without this, SFDMU cannot resolve Parent.ExternalId columns in
                 # Id-less CSVs and silently writes every lookup as null.
@@ -1108,7 +1266,7 @@ def main(argv=None):
             }
         ),
     )
-    for object_name in OBJECT_ORDER:
+    for object_name in plan_objects(manifest):
         write_text(
             output_dir / f"{object_name}.csv", render_csv(object_name, tables[object_name])
         )
@@ -1123,7 +1281,7 @@ def main(argv=None):
     )
 
     total = sum(len(rows) for rows in tables.values())
-    print(f"Generated {total} records across {len(OBJECT_ORDER)} objects in {output_dir}")
+    print(f"Generated {total} records across {len(plan_objects(manifest))} objects in {output_dir}")
     print(f"Conversion report: {report_path}")
     for warning in warnings:
         print(f"WARNING: {warning}")

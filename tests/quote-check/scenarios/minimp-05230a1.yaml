@@ -1,0 +1,33 @@
+# Quote-check scenarios for the SERVOFLEX Mini MP Portable Analyser (05230A1).
+#
+# Each scenario creates one Quote in the target org and checks its priced lines.
+# Prices are GBP. Run: python tests/quote-check/quote_check.py --org <sf-alias>
+#
+# accounts:   test accounts, created on first use and reused afterwards.
+# scenarios:  name, account key, lines to quote, and what each line must show.
+#   lines[].attributes         Attribute Definition Code -> value the rep picks.
+#   expect.lines[].fields      QuoteLineItem field -> expected value.
+#   expect.lines[].attributes  Attribute Definition Code -> value on the priced line.
+
+accounts:
+  direct:
+    name: Quote Check - Direct Customer
+    type: Customer
+    currency: GBP
+
+scenarios:
+  - name: default-minimp-quotes-at-4500
+    description: An unconfigured Mini MP takes its defaults and quotes at the 4500 GBP list price.
+    account: direct
+    lines:
+      - sku: 05230A1
+    expect:
+      lines:
+        - sku: 05230A1
+          fields:
+            ListPrice: 4500
+            TotalPrice: 4500
+          attributes:
+            SMX-05230A1-CONFIGURATION: User Configured
+            SMX-05230A1-SUPPLY_POWER: UK Mains
+

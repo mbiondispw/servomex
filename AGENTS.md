@@ -145,6 +145,7 @@ cci task run validate_setup                                          # no org ne
 python scripts/validate_sfdmu_v5_datasets.py
 python scripts/ai/generate_cci_reference.py                         # after cumulusci.yml edits
 tests/test-sap-attribute-migration.sh                               # SAP attribute generator
+python tests/quote-check/quote_check.py --org servomex             # org quote check (sf alias; writes test quotes)
 ```
 
 ---

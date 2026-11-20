@@ -1,0 +1,299 @@
+# Approved product attribute migration manifest for the SERVOFLEX Mini MP
+# Portable Analyser (SAP material 05230A1).
+#
+# Authoritative, human-reviewed input for
+# scripts/ai/generate_sap_attribute_migration.py. The source is a Workbook
+# Source, not a SAP classification export: provenance is sheet + cell, and there
+# is no SAP Class, so codes are namespaced SMX-05230A1-<attribute>[-<value>].
+#
+# Source workbook: "5230A1 Product configuration and pricing.xlsx", supplied by
+# Servomex. It is customer data and is not committed; every cell this manifest
+# relies on is quoted verbatim in source.text. Multi-cell ranges join their
+# cells with " | " in column order.
+#
+# Currency: every workbook price is GBP. The "Price USD" header (F1) is a
+# mislabel (spec #32).
+#
+# The workbook's "Customer pricing" sheet (Channel Partner discounts) is
+# discount data, not product attributes, and is out of scope for this manifest.
+
+revision: 1
+
+# Approved through spec #32 and ticket #33, which fix the attributes, codes,
+# defaults, and list price below.
+approval:
+  approved: true
+  approved_by: Martin Biondi
+  approved_on: 2026-11-20
+
+source:
+  kind: workbook
+  system: SMX
+  document: 5230A1 Product configuration and pricing.xlsx
+  sap_product: 05230A1
+
+target:
+  product_sku: 05230A1
+  product_classification_name: SERVOFLEX Mini MP Portable Analyser
+  list_price:
+    amount: 4500
+    currency: GBP
+    pricebook: Standard Price Book
+    selling_model: One-Time
+    source:
+      sheet: Product Config and Pricing
+      cell: A2:F2
+      text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser | 4500"
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
+  prerequisites:
+    - >-
+      The one-time product bootstrap has run, so the product carries SKU
+      `05230A1`: `sf apex run --file scripts/apex/bootstrapMiniMpProduct.apex
+      --target-org <sf-alias>`.
+
+categories:
+  - id: OPTIONS
+    label: Mini MP Options
+    description: Configurable options of the SERVOFLEX Mini MP Portable Analyser.
+    disposition: generated
+    disposition_reason: >-
+      The workbook has no section headers, so one category holds every option
+      of the base analyser.
+    source:
+      sheet: Product Config and Pricing
+      cell: A2
+      text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser"
+
+characteristics:
+  - id: CONFIGURATION
+    label: Mini MP Configuration
+    description: User Configured, or one of the four Standard Variants.
+    disposition: generated
+    disposition_reason: Selling choice that drives the Standard Variant rules.
+    type: Picklist
+    category: OPTIONS
+    sequence: 1
+    # The workbook states no default; spec #32 sets User Configured.
+    default_value: User Configured
+    source:
+      sheet: Product Config and Pricing
+      cell: A4
+      text: "Mini MP Configuration"
+    values:
+      - code: A
+        label: User Configured
+        source:
+          sheet: Product Config and Pricing
+          cell: C4:D4
+          text: "A | User Configured"
+      - code: B
+        label: Standard Variant (SV01)
+        source:
+          sheet: Product Config and Pricing
+          cell: C5:D5
+          text: "B | Standard Variant (SV01)"
+      - code: C
+        label: Standard Variant (SV02)
+        source:
+          sheet: Product Config and Pricing
+          cell: C6:D6
+          text: "C | Standard Variant (SV02)"
+      - code: D
+        label: Standard Variant (SV03)
+        source:
+          sheet: Product Config and Pricing
+          cell: C7:D7
+          text: "D | Standard Variant (SV03)"
+      - code: E
+        label: Standard Variant (SV04)
+        source:
+          sheet: Product Config and Pricing
+          cell: C8:D8
+          text: "E | Standard Variant (SV04)"
+
+  - id: SUPPLY_POWER
+    label: Supply Power
+    description: Mains supply region, or a rechargeable battery for that region.
+    disposition: generated
+    disposition_reason: Selling choice.
+    type: Picklist
+    category: OPTIONS
+    sequence: 2
+    # The workbook states no default; spec #32 sets UK Mains.
+    default_value: UK Mains
+    source:
+      sheet: Product Config and Pricing
+      cell: A10
+      text: "Supply Power"
+    values:
+      - code: "1"
+        label: UK Mains
+        source:
+          sheet: Product Config and Pricing
+          cell: C10:D10
+          text: "1 | UK Mains"
+      - code: "2"
+        label: US Mains
+        source:
+          sheet: Product Config and Pricing
+          cell: C11:D11
+          text: "2 | US Mains"
+      - code: "3"
+        label: European Mains
+        source:
+          sheet: Product Config and Pricing
+          cell: C12:D12
+          text: "3 | European Mains"
+      - code: "5"
+        label: Rechargeable Battery UK
+        source:
+          sheet: Product Config and Pricing
+          cell: C13:D13
+          text: "5 | Rechargeable Battery UK"
+      - code: "6"
+        label: Rechargeable Battery US
+        source:
+          sheet: Product Config and Pricing
+          cell: C14:D14
+          text: "6 | Rechargeable Battery US"
+      - code: "7"
+        label: Rechargeable Battery Euro
+        source:
+          sheet: Product Config and Pricing
+          cell: C15:D15
+          text: "7 | Rechargeable Battery Euro"
+
+  # Held back from the Mini MP tracer (#33). Each is generated, with its
+  # option prices and rules, by a later ticket of spec #32.
+  - id: MEASUREMENT_1
+    label: Measurement 1
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A17
+      text: "Measurement 1"
+
+  - id: MEASUREMENT_2
+    label: Measurement 2
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A25
+      text: "Measurement 2"
+
+  - id: SAMPLING_SYSTEM
+    label: Sampling System
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A29
+      text: "Sampling System"
+
+  - id: MA_OUTPUT
+    label: mA Output
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A33
+      text: "mA Output"
+
+  - id: INLET_COUPLER
+    label: Inlet Coupler
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A36
+      text: "Inlet Coupler"
+
+  - id: EXHAUST_VENT_OUTLET
+    label: Exhaust / Vent Outlet
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A39
+      text: "Exhaust / Vent Outlet"
+
+  - id: USER_MANUAL
+    label: User Manual
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A42
+      text: "User Manual"
+
+  - id: PRINTER
+    label: Printer
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A47
+      text: "Printer"
+
+  - id: VEHICLE_POWER_ADAPTOR
+    label: 12/24V Vehicle Power Adaptor
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A50
+      text: "12/24V Vehicle Power Adaptor"
+
+  - id: SIDE_PANEL_ACCESSORIES
+    label: Side Panel Accessories
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A52
+      text: "Side Panel Accessories"
+
+  - id: PROBE_HOLDER
+    label: Probe Holder
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A55
+      text: "Probe Holder"
+
+  - id: SAMPLE_PROBE
+    label: Sample Probe
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A59
+      text: "Sample Probe"
+
+  - id: TRANSPORT_CASE
+    label: Transport Case
+    disposition: deferred
+    disposition_reason: Held back from the Mini MP tracer; generated by a later ticket of spec #32.
+    source:
+      sheet: Product Config and Pricing
+      cell: A64
+      text: "Transport Case"
+
+unresolved:
+  - id: 05230A1-option-prices
+    reason: >-
+      The workbook prices options in column F (for example Rechargeable Battery
+      at 1292 GBP, F13:F15) and gives the Standard Variants "10% discount off
+      total" (F5:F8). No option price adjustments or variant discount are
+      generated yet, so every configuration prices at the 4500 GBP base.
+  - id: 05230A1-option-dependencies
+    reason: >-
+      The workbook's Attribute dependency (column B) and Option Dependency
+      (column E) rules are not generated. They belong to the hand-authored
+      MiniMP5200 Constraint Model, so no generated option combination is
+      proven valid yet.

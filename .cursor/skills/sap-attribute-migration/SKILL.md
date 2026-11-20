@@ -60,7 +60,8 @@ SAP PDF  ──extract──▶  manifest.yaml  ──human approval──▶  g
 - **DO NOT** invent defaults, mandatory flags, or pricing impact that the
   source does not state.
 - **DO NOT** add product-specific CCI tasks, flows, or feature flags. The
-  generic `load_sfdmu_data` task is the deployment interface.
+  generic `load_sfdmu_data` task of the sibling `rlm-base-dev` CCI project is
+  the deployment interface (this project defines no data tasks).
 
 ## Workflow
 
@@ -158,9 +159,38 @@ warning is still accurate.
 
 ### 6. Load
 
+Run from a checkout of `rlm-base-dev` (CumulusCI 4.10.1+, org imported once with
+`cci org import <sf-alias> <cci-alias>`), pointing at this repo by absolute path:
+
 ```bash
-cci task run load_sfdmu_data -o pathtoexportjson <plan.path> --org <alias>
+cd <rlm-base-dev>
+cci task run load_sfdmu_data --org <cci-alias> -o pathtoexportjson <this-repo>/<plan.path>
 ```
+
+The task temporarily writes org credentials into `export.json` and leaves it
+reformatted; re-run the generator (or `git checkout` it) afterwards and delete
+the `reports/`, `source/` and `target/` folders SFDMU leaves in the plan.
+
+## Workbook Sources
+
+A manifest whose source is a spreadsheet, not a SAP classification export, sets
+`source.kind: workbook`:
+
+- `sap_class` is optional; codes are namespaced by the SAP material instead:
+  `<system>-<sap_product>-<attribute>[-<value>]`, e.g. `SMX-05230A1-SUPPLY_POWER-5`.
+- Provenance is `source: { sheet: <sheet>, cell: <cell or range>, text: "<exact text>" }`
+  instead of `page`. Multi-cell ranges join cell values with ` | `.
+- Attribute `DeveloperName` is qualified (`SMX_05230A1_SUPPLY_POWER`), because
+  workbook ids are only unique within their workbook.
+- Approval gate, Disposition rules and the conversion report are unchanged.
+
+Any manifest may also declare:
+
+- `default_value` on a picklist characteristic: must equal a retained value label.
+- `target.list_price: { amount, currency, pricebook, selling_model, source }`:
+  adds an `Upsert` of that `PricebookEntry`, matched on
+  `Product2.StockKeepingUnit;Pricebook2.Name;ProductSellingModel.Name;CurrencyIsoCode`.
+- `plan.prerequisites`: extra lines for the generated README's Prerequisites.
 
 ## Manifest Shape
 

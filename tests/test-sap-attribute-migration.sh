@@ -836,6 +836,116 @@ else
     head -20 "$WORK_DIR/plan-drift.txt"
 fi
 
+# --- Workbook Source manifests ---------------------------------------------
+echo ""
+echo "Test 37: a workbook-sourced manifest generates from sheet and cell provenance"
+RUN_WORKBOOK="$WORK_DIR/run-workbook"
+"$PYTHON" "$GENERATOR" \
+    --manifest "$FIXTURES/approved-workbook.yaml" \
+    --output-dir "$RUN_WORKBOOK" >"$WORK_DIR/run-workbook.log" 2>&1
+EXIT_CODE=$?
+if [[ $EXIT_CODE -eq 0 ]]; then pass "exit code 0"; else fail "exit code 0 (got $EXIT_CODE)"; cat "$WORK_DIR/run-workbook.log"; fi
+assert_contains "$RUN_WORKBOOK/ProductClassification.csv" \
+    "SMX-05230A1,SERVOFLEX Mini MP Portable Analyser," \
+    "the classification is qualified by source system and SAP material, with no SAP Class"
+assert_contains "$RUN_WORKBOOK/AttributeDefinition.csv" \
+    "SMX-05230A1-CONFIGURATION,Mini MP Configuration (CONFIGURATION),Mini MP Configuration," \
+    "attribute codes follow SMX-05230A1-<attribute>"
+assert_contains "$RUN_WORKBOOK/AttributePicklistValue.csv" \
+    "SMX-05230A1-CONFIGURATION-B,Standard Variant (SV01),Standard Variant (SV01),Standard Variant (SV01),B," \
+    "value codes follow SMX-05230A1-<attribute>-<value> and keep the raw workbook code as Abbreviation"
+assert_contains "$RUN_WORKBOOK/conversion-report.md" "\`SERIAL_NUMBER\`" \
+    "the report still accounts for every workbook node"
+assert_contains "$RUN_WORKBOOK/AttributeDefinition.csv" \
+    ",SMX_05230A1_CONFIGURATION,Picklist," \
+    "workbook attribute DeveloperNames are qualified, since workbook ids are only workbook-unique"
+
+echo ""
+echo "Test 38: provenance must match the source kind"
+run_rejection missing-source-cell.yaml "missing source.cell provenance" \
+    "a workbook-sourced node with no cell provenance"
+run_rejection missing-sap-class.yaml "missing required key 'sap_class'" \
+    "a SAP-sourced manifest with no SAP Class"
+
+echo ""
+echo "Test 39: a manifest list price upserts the product's price book entry"
+assert_equals "$(cat "$RUN_WORKBOOK/PricebookEntry.csv" 2>/dev/null)" \
+    "\$\$Product2.StockKeepingUnit\$Pricebook2.Name\$ProductSellingModel.Name\$CurrencyIsoCode,Product2.StockKeepingUnit,Pricebook2.Name,ProductSellingModel.Name,CurrencyIsoCode,UnitPrice,IsActive
+05230A1;Standard Price Book;One-Time;GBP,05230A1,Standard Price Book,One-Time,GBP,4500,true" \
+    "one GBP One-Time Standard Price Book entry at 4500, matched on SKU"
+"$PYTHON" - "$RUN_WORKBOOK/export.json" >"$WORK_DIR/workbook-objects.txt" 2>&1 <<'PY'
+import json, sys
+for entry in json.load(open(sys.argv[1]))["objects"]:
+    name = entry["query"].split(" FROM ", 1)[1].split()[0]
+    print(name, entry["operation"], entry["externalId"])
+PY
+assert_equals "$(tail -1 "$WORK_DIR/workbook-objects.txt")" \
+    "PricebookEntry Upsert Product2.StockKeepingUnit;Pricebook2.Name;ProductSellingModel.Name;CurrencyIsoCode" \
+    "the price book entry loads last, by Upsert on its composite identity"
+assert_absent "$RUN_WORKBOOK/export.json" "deleteOldData" "the priced plan is still non-destructive"
+assert_absent "$RUN_A/export.json" "PricebookEntry" "a manifest without a list price writes no price book entry"
+
+echo ""
+echo "Test 40: an approved default reaches the product, and must name a retained value"
+assert_contains "$RUN_WORKBOOK/ProductAttributeDefinition.csv" \
+    "Mini MP Configuration,User Configured,false,false,false,false,1,Active" \
+    "the multi-value attribute defaults to its approved value and stays editable"
+run_rejection unknown-default-value.yaml "default_value 'User Configurd' is not a retained value label" \
+    "a default that names no retained permitted value"
+
+echo ""
+echo "Test 41: plan READMEs load through rlm-base-dev and state plan prerequisites"
+for readme in "$RUN_SERVOMEX/README.md" "$RUN_WORKBOOK/README.md"; do
+    assert_contains "$readme" "run from a checkout of the sibling \`rlm-base-dev\` CumulusCI project" \
+        "$(basename "$(dirname "$readme")") README says where load_sfdmu_data lives"
+    assert_contains "$readme" "cci task run load_sfdmu_data --org <cci-alias>" \
+        "$(basename "$(dirname "$readme")") README gives the real task invocation"
+    assert_contains "$readme" "git checkout --" \
+        "$(basename "$(dirname "$readme")") README restores the export.json the task rewrites"
+done
+assert_absent "$RUN_SERVOMEX/README.md" "SFDMU v5.0.0+" "README no longer cites the pre-5.6.4 SFDMU floor"
+assert_contains "$RUN_WORKBOOK/README.md" "- Run the one-time product bootstrap first." \
+    "the workbook README lists the manifest's plan prerequisites"
+assert_contains "$RUN_WORKBOOK/README.md" "workbook \`5230A1 Product configuration and pricing.xlsx\`" \
+    "the workbook README names its Workbook Source"
+assert_contains "$RUN_WORKBOOK/README.md" "- \`PricebookEntry\` uses \`Upsert\`" \
+    "the workbook README states how the price book entry is written"
+
+# --- The approved Mini MP conversion ---------------------------------------
+echo ""
+echo "Test 42: the approved Mini MP manifest converts Configuration and Supply Power at 4500 GBP"
+MINIMP_MANIFEST="$REPO_ROOT/datasets/sap/servomex-05230a1/manifest.yaml"
+RUN_MINIMP="$WORK_DIR/run-minimp"
+"$PYTHON" "$GENERATOR" --manifest "$MINIMP_MANIFEST" \
+    --output-dir "$RUN_MINIMP" >"$WORK_DIR/run-minimp.log" 2>&1
+EXIT_CODE=$?
+if [[ $EXIT_CODE -eq 0 ]]; then pass "exit code 0"; else fail "exit code 0 (got $EXIT_CODE)"; cat "$WORK_DIR/run-minimp.log"; fi
+assert_contains "$RUN_MINIMP/ProductAttributeDefinition.csv" \
+    "Mini MP Configuration,User Configured,false,false,false,false,1,Active" \
+    "Mini MP Configuration defaults to A, User Configured"
+assert_contains "$RUN_MINIMP/ProductAttributeDefinition.csv" \
+    "Supply Power,UK Mains,false,false,false,false,2,Active" \
+    "Supply Power defaults to UK Mains"
+for value in A B C D E; do
+    assert_contains "$RUN_MINIMP/AttributePicklistValue.csv" "SMX-05230A1-CONFIGURATION-$value," \
+        "Mini MP Configuration offers $value"
+done
+SUPPLY_ROWS="$(grep -cF "SMX-05230A1-SUPPLY_POWER-PL," "$RUN_MINIMP/AttributePicklistValue.csv")"
+assert_equals "$SUPPLY_ROWS" "6" "Supply Power offers its six workbook values"
+assert_contains "$RUN_MINIMP/PricebookEntry.csv" \
+    "05230A1;Standard Price Book;One-Time;GBP,05230A1,Standard Price Book,One-Time,GBP,4500,true" \
+    "the Standard Price Book entry is 4500 GBP One-Time"
+
+echo ""
+echo "Test 43: the committed Mini MP plan matches a fresh generation of its manifest"
+if diff -r "$REPO_ROOT/datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1" "$RUN_MINIMP" \
+    >"$WORK_DIR/minimp-drift.txt" 2>&1; then
+    pass "the committed Mini MP plan is byte-identical to a fresh generation"
+else
+    fail "the committed Mini MP plan is byte-identical to a fresh generation"
+    head -20 "$WORK_DIR/minimp-drift.txt"
+fi
+
 echo ""
 echo "========================================="
 echo "Passed: $PASS   Failed: $FAIL"

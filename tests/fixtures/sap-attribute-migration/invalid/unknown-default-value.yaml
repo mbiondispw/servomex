@@ -1,0 +1,48 @@
+# Negative fixture: a default that names no retained permitted value.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-11-20
+
+source:
+  kind: workbook
+  system: SMX
+  document: fixture.xlsx
+  sap_product: 05230A1
+
+target:
+  product_sku: 05230A1
+
+plan:
+  path: build/never-written
+
+categories:
+  - id: OPTIONS
+    label: Options
+    disposition: generated
+    source:
+      sheet: Product Config and Pricing
+      cell: A2
+      text: "Base Analyser"
+
+characteristics:
+  - id: CONFIGURATION
+    label: Mini MP Configuration
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    default_value: User Configurd
+    source:
+      sheet: Product Config and Pricing
+      cell: A4
+      text: "Mini MP Configuration"
+    values:
+      - code: A
+        label: User Configured
+        source:
+          sheet: Product Config and Pricing
+          cell: C4:D4
+          text: "A | User Configured"

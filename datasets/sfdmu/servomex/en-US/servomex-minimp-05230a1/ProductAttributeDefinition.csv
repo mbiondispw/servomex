@@ -1,0 +1,3 @@
+Name,Product2.StockKeepingUnit,ProductClassificationAttribute.Name,AttributeCategory.Code,AttributeDefinition.Code,AttributeNameOverride,DefaultValue,IsHidden,IsPriceImpacting,IsReadOnly,IsRequired,Sequence,Status
+SMX-05230A1-CONFIGURATION-05230A1,05230A1,SMX-05230A1-CONFIGURATION,SMX-05230A1-OPTIONS,SMX-05230A1-CONFIGURATION,Mini MP Configuration,User Configured,false,false,false,false,1,Active
+SMX-05230A1-SUPPLY_POWER-05230A1,05230A1,SMX-05230A1-SUPPLY_POWER,SMX-05230A1-OPTIONS,SMX-05230A1-SUPPLY_POWER,Supply Power,UK Mains,false,false,false,false,2,Active

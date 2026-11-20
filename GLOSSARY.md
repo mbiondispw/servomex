@@ -39,6 +39,7 @@ configurator attributes. Owning skill:
 | **Shared Permitted-Value Set** | One Attribute Picklist declared once in the manifest and referenced by several SAP Characteristics that repeat the same options. |
 | **Disposition** | The recorded decision for a source node: `generated`, `excluded`, `deferred`, `superseded`, or `source-control`. |
 | **Source-qualified code** | A generated Revenue Cloud code namespaced by source system, class, characteristic, and value, so repeated raw SAP codes cannot collide globally. |
+| **Workbook Source** | A non-SAP Manifest source: a spreadsheet cited by sheet and cell (`source.kind: workbook`). It has no SAP Class, so codes are namespaced by the SAP material. |
 | **Conversion report** | The generated Markdown record of dispositions, generated counts, exclusions, and unresolved source logic. |
 
 ## SAP Configuration Rules

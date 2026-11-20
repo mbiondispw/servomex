@@ -8,12 +8,28 @@ Generated SFDMU plan converting SAP Class `CLASS_7930B` (`07930B1 VC.pdf`) into 
 ## Prerequisites
 
 - Product `07930B1` already exists in the target org. This plan never creates Products.
-- SFDMU v5.0.0+ (`sf sfdmu run`).
+- SFDMU v5.6.4+ (`sf sfdmu run`).
+- CumulusCI 4.10.1+, and the target org imported into the `rlm-base-dev` keychain
+  once: `cci org import <sf-alias> <cci-alias>`.
 
 ## Load
 
+This project defines no data tasks. The `load_sfdmu_data` task is
+run from a checkout of the sibling `rlm-base-dev` CumulusCI project, pointed at
+this plan by absolute path:
+
 ```bash
-cci task run load_sfdmu_data -o pathtoexportjson datasets/sfdmu/servomex/en-US/servomex-sap-attributes --org <alias>
+cd <rlm-base-dev>
+cci task run load_sfdmu_data --org <cci-alias> \
+    -o pathtoexportjson <this-repo>/datasets/sfdmu/servomex/en-US/servomex-sap-attributes
+```
+
+The task writes the org's credentials into `export.json` while it runs and leaves
+the file reformatted afterwards. Never commit it mid-load; restore it after the
+load with:
+
+```bash
+git checkout -- datasets/sfdmu/servomex/en-US/servomex-sap-attributes/export.json
 ```
 
 ## Objects

@@ -1,0 +1,80 @@
+# Positive fixture: approved minimal Workbook Source conversion (Mini MP
+# Configuration only, plus the list price). Kept independent of datasets/sap/
+# so that curation work on the real manifest does not move the test's
+# expectations. No sap_class: the workbook is not a SAP classification.
+
+revision: test-1
+
+approval:
+  approved: true
+  approved_by: Test Reviewer
+  approved_on: 2026-11-20
+
+source:
+  kind: workbook
+  system: SMX
+  document: 5230A1 Product configuration and pricing.xlsx
+  sap_product: 05230A1
+
+target:
+  product_sku: 05230A1
+  product_classification_name: SERVOFLEX Mini MP Portable Analyser
+  list_price:
+    amount: 4500
+    currency: GBP
+    pricebook: Standard Price Book
+    selling_model: One-Time
+    source:
+      sheet: Product Config and Pricing
+      cell: F2
+      text: "4500"
+
+plan:
+  path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
+  prerequisites:
+    - Run the one-time product bootstrap first.
+
+categories:
+  - id: OPTIONS
+    label: Mini MP Options
+    disposition: generated
+    disposition_reason: The workbook has no section headers; one category holds every option.
+    source:
+      sheet: Product Config and Pricing
+      cell: A2
+      text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser"
+
+characteristics:
+  - id: CONFIGURATION
+    label: Mini MP Configuration
+    disposition: generated
+    type: Picklist
+    category: OPTIONS
+    sequence: 1
+    default_value: User Configured
+    source:
+      sheet: Product Config and Pricing
+      cell: A4
+      text: "Mini MP Configuration"
+    values:
+      - code: A
+        label: User Configured
+        source:
+          sheet: Product Config and Pricing
+          cell: C4:D4
+          text: "A | User Configured"
+      - code: B
+        label: Standard Variant (SV01)
+        source:
+          sheet: Product Config and Pricing
+          cell: C5:D5
+          text: "B | Standard Variant (SV01)"
+
+  - id: SERIAL_NUMBER
+    label: Serial Number
+    disposition: excluded
+    disposition_reason: Not a selling choice.
+    source:
+      sheet: Product Config and Pricing
+      cell: A99
+      text: "Serial Number"

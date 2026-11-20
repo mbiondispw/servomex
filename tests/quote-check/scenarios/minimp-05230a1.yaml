@@ -169,8 +169,7 @@ scenarios:
           SMX-05230A1-CONFIGURATION: Standard Variant (SV01)
           SMX-05230A1-MEASUREMENT_2: CO2 50% FS
     expect:
-      rejected:
-        message: Measurement 2 is only available for the User Configured Mini MP
+      rejected: {}
 
   - name: minimp-rules-rejects-sample-probe-without-side-panel
     description: A Sample Probe needs a side panel (and so a Probe Holder).

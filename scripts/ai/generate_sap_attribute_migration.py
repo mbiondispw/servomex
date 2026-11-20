@@ -155,7 +155,28 @@ def validate_node(node, context, kind):
     return disposition
 
 
-def validate_values(node, context):
+def validate_price(value, value_context, manifest):
+    """A price makes a permitted value an Option Adder: a flat amount added to the line."""
+    price = value.get("price")
+    if price is None:
+        return
+    context = f"{value_context}.price"
+    if not is_retained(value):
+        raise ManifestError(f"{context}: only retained values may carry a price")
+    if not manifest["target"].get("option_adders"):
+        raise ManifestError(
+            f"{context}: priced values need a target.option_adders block "
+            "(schedule, selling_model, currency, effective_from)"
+        )
+    if not isinstance(price, dict):
+        raise ManifestError(f"{context}: must be a mapping with amount and source")
+    amount = price.get("amount")
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount <= 0:
+        raise ManifestError(f"{context}: amount must be a positive number")
+    validate_provenance(price.get("source"), source_kind(manifest), context)
+
+
+def validate_values(node, context, manifest=None):
     for value_index, value in enumerate(node.get("values") or []):
         value_context = f"{context}.values[{value_index}]"
         require(value, "code", value_context)
@@ -168,6 +189,14 @@ def validate_values(node, context):
             )
         if value_disposition in {"excluded", "added"} and not value.get("disposition_reason"):
             raise ManifestError(f"{value_context}: {value_disposition} values need a reason")
+        if manifest is None:
+            if value.get("price") is not None:
+                raise ManifestError(
+                    f"{value_context}.price: shared picklist values cannot carry a price; "
+                    "price the value on its characteristic instead"
+                )
+        else:
+            validate_price(value, value_context, manifest)
 
 
 def validate(manifest):
@@ -202,6 +231,12 @@ def validate(manifest):
         if isinstance(amount, bool) or not isinstance(amount, (int, float)) or amount < 0:
             raise ManifestError("target.list_price: amount must be a non-negative number")
         validate_provenance(list_price.get("source"), kind, "target.list_price")
+    option_adders = target.get("option_adders")
+    if option_adders is not None:
+        if not isinstance(option_adders, dict):
+            raise ManifestError("target.option_adders: must be a mapping")
+        for key in ("schedule", "selling_model", "currency", "effective_from"):
+            require(option_adders, key, "target.option_adders")
 
     plan = manifest.get("plan")
     if not isinstance(plan, dict):
@@ -302,7 +337,7 @@ def validate(manifest):
                 f"{context}: only picklist characteristics may declare values. "
                 f"Set type: Picklist, or drop the values from this '{data_type}' characteristic."
             )
-        validate_values(node, context)
+        validate_values(node, context, manifest)
         default_value = node.get("default_value")
         if default_value and data_type == "Picklist":
             options = retained_values(picklists[shared] if shared else node)
@@ -341,6 +376,18 @@ def retained_values(characteristic):
     ]
 
 
+def priced_values(characteristic):
+    """Retained values that carry an Option Adder price, in source order."""
+    return [value for value in retained_values(characteristic) if value.get("price")]
+
+
+def code_prefix(manifest):
+    """SMX-05230A1 for a workbook (namespaced by SAP material), SAP-<class> otherwise."""
+    source = manifest["source"]
+    namespace = source["sap_product"] if source_kind(manifest) == "workbook" else source["sap_class"]
+    return qualify(source["system"], namespace)
+
+
 def build_records(manifest, picklists, categories, characteristics):
     source = manifest["source"]
     system = source["system"]
@@ -348,7 +395,7 @@ def build_records(manifest, picklists, categories, characteristics):
     # A workbook has no SAP Class, so its codes are namespaced by the SAP material.
     namespace = source["sap_product"] if is_workbook else source["sap_class"]
     sku = manifest["target"]["product_sku"]
-    prefix = qualify(system, namespace)
+    prefix = code_prefix(manifest)
 
     generated_categories = [
         node for node in categories.values() if node["disposition"] == "generated"
@@ -485,7 +532,7 @@ def build_records(manifest, picklists, categories, characteristics):
             "AttributeNameOverride": label,
             "DefaultValue": default_value,
             "IsHidden": "false",
-            "IsPriceImpacting": "false",
+            "IsPriceImpacting": "true" if priced_values(characteristic) else "false",
             "IsReadOnly": "true" if is_single_value else "false",
             "IsRequired": "true" if is_single_value else "false",
             "Sequence": sequence,
@@ -532,6 +579,43 @@ def build_records(manifest, picklists, categories, characteristics):
             }
         )
 
+    option_adders = manifest["target"].get("option_adders")
+    for characteristic in sorted(generated_characteristics, key=lambda node: node["id"]):
+        attribute_code = qualify(prefix, characteristic["id"])
+        for value in priced_values(characteristic):
+            rule_name = qualify(prefix, characteristic["id"], value["code"])
+            tables["AttributeBasedAdjRule"].append({"Name": rule_name})
+            tables["AttributeAdjustmentCondition"].append(
+                {
+                    ADJ_CONDITION_IDENTITY: f"{rule_name};{attribute_code};{sku}",
+                    "AttributeBasedAdjRule.Name": rule_name,
+                    "AttributeDefinition.Code": attribute_code,
+                    "Product.StockKeepingUnit": sku,
+                    "Operator": "equals",
+                    "StringValue": ascii_normalize(value["label"]),
+                }
+            )
+            identity = [
+                rule_name,
+                option_adders["schedule"],
+                sku,
+                option_adders["selling_model"],
+                option_adders["currency"],
+            ]
+            tables["AttributeBasedAdjustment"].append(
+                {
+                    ADJUSTMENT_IDENTITY: ";".join(identity),
+                    "AttributeBasedAdjRule.Name": rule_name,
+                    "PriceAdjustmentSchedule.Name": option_adders["schedule"],
+                    "Product.StockKeepingUnit": sku,
+                    "ProductSellingModel.Name": option_adders["selling_model"],
+                    "CurrencyIsoCode": option_adders["currency"],
+                    "AdjustmentType": "Amount",
+                    "AdjustmentValue": format_amount(value["price"]["amount"]),
+                    "EffectiveFrom": str(option_adders["effective_from"]),
+                }
+            )
+
     duplicates = find_duplicate_codes(tables)
     if duplicates:
         raise ManifestError(
@@ -551,6 +635,13 @@ def build_records(manifest, picklists, categories, characteristics):
 
 PRICEBOOK_ENTRY_IDENTITY = (
     "$$Product2.StockKeepingUnit$Pricebook2.Name$ProductSellingModel.Name$CurrencyIsoCode"
+)
+ADJ_CONDITION_IDENTITY = (
+    "$$AttributeBasedAdjRule.Name$AttributeDefinition.Code$Product.StockKeepingUnit"
+)
+ADJUSTMENT_IDENTITY = (
+    "$$AttributeBasedAdjRule.Name$PriceAdjustmentSchedule.Name$Product.StockKeepingUnit"
+    "$ProductSellingModel.Name$CurrencyIsoCode"
 )
 
 
@@ -572,6 +663,9 @@ IDENTITY_FIELD = {
     "Product2": "StockKeepingUnit",
     "ProductAttributeDefinition": "Name",
     "PricebookEntry": PRICEBOOK_ENTRY_IDENTITY,
+    "AttributeBasedAdjRule": "Name",
+    "AttributeAdjustmentCondition": ADJ_CONDITION_IDENTITY,
+    "AttributeBasedAdjustment": ADJUSTMENT_IDENTITY,
 }
 
 
@@ -680,6 +774,22 @@ def check_plan_integrity(tables):
             "Name", assignments, "classification attribute assignment",
         )
 
+    rules = {row["Name"] for row in tables["AttributeBasedAdjRule"]}
+    for object_name, identity in (
+        ("AttributeAdjustmentCondition", ADJ_CONDITION_IDENTITY),
+        ("AttributeBasedAdjustment", ADJUSTMENT_IDENTITY),
+    ):
+        for row in tables[object_name]:
+            require_parent(
+                object_name, row, "AttributeBasedAdjRule.Name", identity, rules,
+                "adjustment rule",
+            )
+    for row in tables["AttributeAdjustmentCondition"]:
+        require_parent(
+            "AttributeAdjustmentCondition", row, "AttributeDefinition.Code",
+            ADJ_CONDITION_IDENTITY, definitions, "attribute definition",
+        )
+
     check_single_value_policy(tables)
 
 
@@ -729,14 +839,40 @@ OBJECT_ORDER = [
     "Product2",
     "ProductAttributeDefinition",
     "PricebookEntry",
+    # Conditions load before adjustments: the platform derives each adjustment's
+    # AttributeCount and AttributeAdjConditionsHash from its rule's conditions.
+    "AttributeBasedAdjRule",
+    "AttributeAdjustmentCondition",
+    "AttributeBasedAdjustment",
 ]
+OPTION_ADDER_OBJECTS = {
+    "AttributeBasedAdjRule",
+    "AttributeAdjustmentCondition",
+    "AttributeBasedAdjustment",
+}
+
+
+def has_option_adders(manifest):
+    return any(
+        value.get("price")
+        for node in manifest.get("characteristics") or []
+        if node.get("disposition") == "generated"
+        for value in node.get("values") or []
+    )
 
 
 def plan_objects(manifest):
-    """Objects this manifest's plan loads, in OBJECT_ORDER. Unpriced plans skip PricebookEntry."""
-    if manifest["target"].get("list_price"):
-        return list(OBJECT_ORDER)
-    return [name for name in OBJECT_ORDER if name != "PricebookEntry"]
+    """Objects this manifest's plan loads, in OBJECT_ORDER.
+
+    A plan with no list price skips PricebookEntry; one with no priced values
+    skips the Option Adder objects.
+    """
+    skipped = set()
+    if not manifest["target"].get("list_price"):
+        skipped.add("PricebookEntry")
+    if not has_option_adders(manifest):
+        skipped |= OPTION_ADDER_OBJECTS
+    return [name for name in OBJECT_ORDER if name not in skipped]
 
 CSV_COLUMNS = {
     "AttributePicklist": ["Code", "Name", "DataType", "Description", "Status"],
@@ -815,12 +951,33 @@ CSV_COLUMNS = {
         "UnitPrice",
         "IsActive",
     ],
+    "AttributeBasedAdjRule": ["Name"],
+    "AttributeAdjustmentCondition": [
+        ADJ_CONDITION_IDENTITY,
+        "AttributeBasedAdjRule.Name",
+        "AttributeDefinition.Code",
+        "Product.StockKeepingUnit",
+        "Operator",
+        "StringValue",
+    ],
+    "AttributeBasedAdjustment": [
+        ADJUSTMENT_IDENTITY,
+        "AttributeBasedAdjRule.Name",
+        "PriceAdjustmentSchedule.Name",
+        "Product.StockKeepingUnit",
+        "ProductSellingModel.Name",
+        "CurrencyIsoCode",
+        "AdjustmentType",
+        "AdjustmentValue",
+        "EffectiveFrom",
+    ],
 }
 
 
 def export_objects(manifest):
     """SFDMU object definitions for the plan, in parent-before-child order."""
     sku = manifest["target"]["product_sku"]
+    prefix = code_prefix(manifest)
     definitions = dict(zip(OBJECT_ORDER, [
         {
             "query": "SELECT Code, DataType, Description, Id, Name, Status "
@@ -892,6 +1049,33 @@ def export_objects(manifest):
             "operation": "Upsert",
             "externalId": "Product2.StockKeepingUnit;Pricebook2.Name;"
             "ProductSellingModel.Name;CurrencyIsoCode",
+        },
+        {
+            "query": "SELECT Id, Name FROM AttributeBasedAdjRule "
+            f"WHERE Name LIKE '{prefix}-%' ORDER BY Name ASC",
+            "operation": "Upsert",
+            "externalId": "Name",
+        },
+        {
+            "query": "SELECT AttributeBasedAdjRuleId, AttributeBasedAdjRule.Name, "
+            "AttributeDefinitionId, AttributeDefinition.Code, Id, Operator, ProductId, "
+            "Product.StockKeepingUnit, StringValue FROM AttributeAdjustmentCondition "
+            f"WHERE Product.StockKeepingUnit = '{sku}' "
+            "ORDER BY AttributeBasedAdjRule.Name ASC, AttributeDefinition.Code ASC",
+            "operation": "Upsert",
+            "externalId": "AttributeBasedAdjRule.Name;AttributeDefinition.Code;"
+            "Product.StockKeepingUnit",
+        },
+        {
+            "query": "SELECT AdjustmentType, AdjustmentValue, AttributeBasedAdjRuleId, "
+            "AttributeBasedAdjRule.Name, CurrencyIsoCode, EffectiveFrom, Id, "
+            "PriceAdjustmentScheduleId, PriceAdjustmentSchedule.Name, ProductId, "
+            "Product.StockKeepingUnit, ProductSellingModelId, ProductSellingModel.Name "
+            f"FROM AttributeBasedAdjustment WHERE Product.StockKeepingUnit = '{sku}' "
+            "ORDER BY AttributeBasedAdjRule.Name ASC, CurrencyIsoCode ASC",
+            "operation": "Upsert",
+            "externalId": "AttributeBasedAdjRule.Name;PriceAdjustmentSchedule.Name;"
+            "Product.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode",
         },
     ]))
     return [definitions[name] for name in plan_objects(manifest)]
@@ -1092,6 +1276,35 @@ def render_report(manifest, picklists, categories, characteristics, tables, warn
     else:
         lines.append("None.")
 
+    if has_option_adders(manifest):
+        option_adders = manifest["target"]["option_adders"]
+        lines += [
+            "",
+            "## Option Adders",
+            "",
+            "Each priced permitted value adds a flat amount to the line through an "
+            f"attribute-based price adjustment on the `{option_adders['schedule']}` "
+            f"schedule ({option_adders['selling_model']}). Unpriced values add nothing.",
+            "",
+            "| Characteristic | Value Code | Value Label | Price | Source |",
+            "|----------------|------------|-------------|-------|--------|",
+        ]
+        for node in sorted(characteristics.values(), key=lambda node: node["id"]):
+            if node["disposition"] != "generated":
+                continue
+            for value in priced_values(node):
+                price_source = value["price"]["source"]
+                cited = (
+                    f"{price_source['sheet']}!{price_source['cell']}"
+                    if is_workbook
+                    else f"page {price_source['page']}"
+                )
+                lines.append(
+                    f"| `{node['id']}` | `{value['code']}` | {value['label']} "
+                    f"| {format_amount(value['price']['amount'])} {option_adders['currency']} "
+                    f"| {cited} |"
+                )
+
     lines += ["", "## Unresolved Source Logic", ""]
     if warnings:
         lines.append(
@@ -1198,6 +1411,14 @@ def render_plan_readme(manifest, tables, warnings):
         "ids composed only of relationship traversals. `AttributeCategoryAttribute` has no",
         "direct identity field, so it is the one object matched by traversal.",
     ]
+    if has_option_adders(manifest):
+        lines += [
+            "",
+            "Each Option Adder's `AttributeBasedAdjRule` is named by its permitted value code.",
+            "Its condition and adjustment have no direct identity field, so they match on",
+            "rule name, attribute, product, and (for the adjustment) schedule, selling model,",
+            "and currency, which SFDMU 5.6.4+ matches under `Upsert`.",
+        ]
     if list_price:
         lines += [
             "",
@@ -1219,6 +1440,15 @@ def render_plan_readme(manifest, tables, warnings):
             f"  {list_price['currency']} `{list_price['selling_model']}` entry in "
             f"`{list_price['pricebook']}` to {format_amount(list_price['amount'])}, "
             "updating the existing entry in place.",
+        ]
+    if has_option_adders(manifest):
+        option_adders = manifest["target"]["option_adders"]
+        lines += [
+            "- The Option Adder objects use `Upsert`; conditions and adjustments are scoped to",
+            f"  `Product.StockKeepingUnit = '{sku}'`. Each adjustment is a flat "
+            f"{option_adders['currency']} amount on",
+            f"  `{option_adders['schedule']}`. The pricing procedure reads them through the",
+            "  `Attribute_Based_Adjustment_Decision_Table`; refresh it after every load.",
         ]
     lines += [
         "",

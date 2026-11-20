@@ -1,5 +1,5 @@
 # Positive fixture: approved minimal Workbook Source conversion (Mini MP
-# Configuration only, plus the list price). Kept independent of datasets/sap/
+# Configuration only, plus the list price and one Option Adder). Kept independent of datasets/sap/
 # so that curation work on the real manifest does not move the test's
 # expectations. No sap_class: the workbook is not a SAP classification.
 
@@ -28,6 +28,11 @@ target:
       sheet: Product Config and Pricing
       cell: F2
       text: "4500"
+  option_adders:
+    schedule: Standard Attribute Based Adjustment
+    selling_model: One-Time
+    currency: GBP
+    effective_from: "2026-01-01T00:00:00.000+0000"
 
 plan:
   path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
@@ -92,6 +97,12 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C54:D54
           text: "3 | Flow Meter"
+        price:
+          amount: 947
+          source:
+            sheet: Product Config and Pricing
+            cell: F54
+            text: "947"
 
   - id: SERIAL_NUMBER
     label: Serial Number

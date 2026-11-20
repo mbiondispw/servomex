@@ -14,13 +14,17 @@
 # Currency: every workbook price is GBP. The "Price USD" header (F1) is a
 # mislabel (spec #32).
 #
+# Option Adders: every workbook option price (column F) is a `price` on its
+# permitted value, cited by its F cell. Each becomes a flat GBP attribute-based
+# price adjustment on the Mini MP line (#35). Unpriced values add nothing.
+#
 # The workbook's "Customer pricing" sheet (Channel Partner discounts) is
 # discount data, not product attributes, and is out of scope for this manifest.
 
-revision: 2
+revision: 3
 
-# Approved through spec #32 and tickets #33 and #34, which fix the attributes,
-# codes, defaults, and list price below. Values added beyond the workbook carry
+# Approved through spec #32 and tickets #33, #34 and #35, which fix the
+# attributes, codes, defaults, list price, and option prices below. Values added beyond the workbook carry
 # disposition: added and a reason, and no cell.
 approval:
   approved: true
@@ -45,6 +49,11 @@ target:
       sheet: Product Config and Pricing
       cell: A2:F2
       text: "Base Analyser - 05230A1 - SERVOFLEX Mini MP Portable Analyser | 4500"
+  option_adders:
+    schedule: Standard Attribute Based Adjustment
+    selling_model: One-Time
+    currency: GBP
+    effective_from: "2026-01-01T00:00:00.000+0000"
 
 plan:
   path: datasets/sfdmu/servomex/en-US/servomex-minimp-05230a1
@@ -153,18 +162,36 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C13:D13
           text: "5 | Rechargeable Battery UK"
+        price:
+          amount: 1292
+          source:
+            sheet: Product Config and Pricing
+            cell: F13
+            text: "1292"
       - code: "6"
         label: Rechargeable Battery US
         source:
           sheet: Product Config and Pricing
           cell: C14:D14
           text: "6 | Rechargeable Battery US"
+        price:
+          amount: 1292
+          source:
+            sheet: Product Config and Pricing
+            cell: F14
+            text: "1292"
       - code: "7"
         label: Rechargeable Battery Euro
         source:
           sheet: Product Config and Pricing
           cell: C15:D15
           text: "7 | Rechargeable Battery Euro"
+        price:
+          amount: 1292
+          source:
+            sheet: Product Config and Pricing
+            cell: F15
+            text: "1292"
 
   - id: MEASUREMENT_1
     label: Measurement 1
@@ -195,36 +222,72 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C18:D18
           text: "1A | Oxygen, Industrial"
+        price:
+          amount: 4755
+          source:
+            sheet: Product Config and Pricing
+            cell: F18
+            text: "4755"
       - code: "2"
         label: "Oxygen, High Accuracy"
         source:
           sheet: Product Config and Pricing
           cell: C19:D19
           text: "2 | Oxygen, High Accuracy"
+        price:
+          amount: 7534
+          source:
+            sheet: Product Config and Pricing
+            cell: F19
+            text: "7534"
       - code: "3"
         label: "CO2 100% FS"
         source:
           sheet: Product Config and Pricing
           cell: C20:D20
           text: "3 | CO2 100% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F20
+            text: "4750"
       - code: "4"
         label: "CO2 50% FS"
         source:
           sheet: Product Config and Pricing
           cell: C21:D21
           text: "4 | CO2 50% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F21
+            text: "4750"
       - code: "5"
         label: "CO2 25% FS"
         source:
           sheet: Product Config and Pricing
           cell: C22:D22
           text: "5 | CO2 25% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F22
+            text: "4750"
       - code: "6"
         label: "CO2 10% FS"
         source:
           sheet: Product Config and Pricing
           cell: C23:D23
           text: "6 | CO2 10% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F23
+            text: "4750"
 
   - id: MEASUREMENT_2
     label: Measurement 2
@@ -254,24 +317,48 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C25:D25
           text: "1 | CO2 100% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F25
+            text: "4750"
       - code: "2"
         label: "CO2 50% FS"
         source:
           sheet: Product Config and Pricing
           cell: C26:D26
           text: "2 | CO2 50% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F26
+            text: "4750"
       - code: "3"
         label: "CO2 25% FS"
         source:
           sheet: Product Config and Pricing
           cell: C27:D27
           text: "3 | CO2 25% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F27
+            text: "4750"
       - code: "4"
         label: "CO2 10% FS"
         source:
           sheet: Product Config and Pricing
           cell: C28:D28
           text: "4 | CO2 10% FS"
+        price:
+          amount: 4750
+          source:
+            sheet: Product Config and Pricing
+            cell: F28
+            text: "4750"
 
   - id: SAMPLING_SYSTEM
     label: Sampling System
@@ -322,12 +409,24 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C33:D33
           text: "1 | Single"
+        price:
+          amount: 587
+          source:
+            sheet: Product Config and Pricing
+            cell: F33
+            text: "587"
       - code: "2"
         label: Dual
         source:
           sheet: Product Config and Pricing
           cell: C34:D34
           text: "2 | Dual"
+        price:
+          amount: 1170
+          source:
+            sheet: Product Config and Pricing
+            cell: F34
+            text: "1170"
 
   - id: INLET_COUPLER
     label: Inlet Coupler
@@ -356,6 +455,12 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C37:D37
           text: "2 | 1/8\" NPT"
+        price:
+          amount: 99
+          source:
+            sheet: Product Config and Pricing
+            cell: F37
+            text: "99"
 
   - id: EXHAUST_VENT_OUTLET
     label: Exhaust / Vent Outlet
@@ -452,6 +557,12 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C48:D48
           text: "2 | Supplied"
+        price:
+          amount: 1521
+          source:
+            sheet: Product Config and Pricing
+            cell: F48
+            text: "1521"
 
   - id: VEHICLE_POWER_ADAPTOR
     label: 12/24V Vehicle Power Adaptor
@@ -506,18 +617,36 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C52:D52
           text: "1 | Sample Conditioning Panel"
+        price:
+          amount: 1326
+          source:
+            sheet: Product Config and Pricing
+            cell: F52
+            text: "1326"
       - code: "2"
         label: Flow Meter + Valve
         source:
           sheet: Product Config and Pricing
           cell: C53:D53
           text: "2 | Flow Meter + Valve"
+        price:
+          amount: 1054
+          source:
+            sheet: Product Config and Pricing
+            cell: F53
+            text: "1054"
       - code: "3"
         label: Flow Meter
         source:
           sheet: Product Config and Pricing
           cell: C54:D54
           text: "3 | Flow Meter"
+        price:
+          amount: 947
+          source:
+            sheet: Product Config and Pricing
+            cell: F54
+            text: "947"
 
   - id: PROBE_HOLDER
     label: Probe Holder
@@ -540,12 +669,24 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C56:D56
           text: "1 | Supplied"
+        price:
+          amount: 339
+          source:
+            sheet: Product Config and Pricing
+            cell: F56
+            text: "339"
       - code: "2"
         label: "Supplied : Including Filter"
         source:
           sheet: Product Config and Pricing
           cell: C57:D57
           text: "2 | Supplied : Including Filter"
+        price:
+          amount: 467
+          source:
+            sheet: Product Config and Pricing
+            cell: F57
+            text: "467"
 
   - id: SAMPLE_PROBE
     label: Sample Probe
@@ -574,12 +715,24 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C61:D61
           text: "2 | 25cm, SS, Tip, <180C"
+        price:
+          amount: 111
+          source:
+            sheet: Product Config and Pricing
+            cell: F61
+            text: "111"
       - code: "3"
         label: 1m SS
         source:
           sheet: Product Config and Pricing
           cell: C62:D62
           text: "3 | 1m SS"
+        price:
+          amount: 133
+          source:
+            sheet: Product Config and Pricing
+            cell: F62
+            text: "133"
 
   - id: TRANSPORT_CASE
     label: Transport Case
@@ -608,14 +761,19 @@ characteristics:
           sheet: Product Config and Pricing
           cell: C66:D66
           text: "2 | Supplied"
+        price:
+          amount: 806
+          source:
+            sheet: Product Config and Pricing
+            cell: F66
+            text: "806"
 
 unresolved:
-  - id: 05230A1-option-prices
+  - id: 05230A1-variant-discount
     reason: >-
-      The workbook prices options in column F (for example Rechargeable Battery
-      at 1292 GBP, F13:F15) and gives the Standard Variants "10% discount off
-      total" (F5:F8). No option price adjustments or variant discount are
-      generated yet, so every configuration prices at the 4500 GBP base.
+      The workbook gives the Standard Variants "10% discount off total"
+      (F5:F8). No variant discount is generated yet, so a Standard Variant
+      prices at its full base plus Option Adders.
   - id: 05230A1-option-dependencies
     reason: >-
       The workbook's Attribute dependency (column B) and Option Dependency

@@ -423,9 +423,15 @@ steps. Personas are Servomex's own roles.
    approved wording and a record of exactly what was sent. The quote version is
    the revision. No more `… Rev 2.xlsx` saved under the opportunity.
 
-If the live build ran long, switch to the backup NordicGas AS quote, which
-already has Lars as Quote Contact. A re-send from Presented works and adds a
-second Proposal. See [Send Proposal](../features/send-proposal.md) for the
+**Fallback.** If the live build ran long, switch to the backup quote
+**NordicGas AS — Backup Demo Quote**. It sits on the opportunity
+*NordicGas AS — Analyser Upgrade (Backup Demo)*, already has Lars as Quote
+Contact, and is priced by the engine (SERVOPRO 4900 plus two calibration gas
+kits, USD 48,070). Before each rehearsal and before the demo, run
+`cci task run create_backup_demo_quote --org servomex`. It creates the quote on
+a fresh org and resets it to **Draft** otherwise, keeping earlier Proposals and
+emails. A re-send from Presented also works and adds a second Proposal. See
+[Send Proposal](../features/send-proposal.md#backup-demo-quote) for the
 refusals and recovery steps.
 
 ### Act 8 — PO change to order (5 min)

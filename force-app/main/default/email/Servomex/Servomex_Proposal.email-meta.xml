@@ -10,7 +10,7 @@
 
 Please find attached our proposal for {!Quote.Name}.
 
-Grand total: {!Quote.GrandTotal}
+Grand total: {!Quote.TotalPrice}
 Valid until: {!Quote.ExpirationDate}
 
 If you have any questions, just reply to this email.

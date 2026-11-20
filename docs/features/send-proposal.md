@@ -73,7 +73,11 @@ presenter's mailbox, never a real customer's.
 | Part | Content |
 |------|---------|
 | Subject | `Servomex proposal {!Quote.QuoteNumber}` |
-| Body | Greets `{!Contact.FirstName}`, names `{!Quote.Name}`, states `{!Quote.GrandTotal}` and `{!Quote.ExpirationDate}`, and is signed with the sender's name |
+| Body | Greets `{!Contact.FirstName}`, names `{!Quote.Name}`, states the grand total as `{!Quote.TotalPrice}` and `{!Quote.ExpirationDate}`, and is signed with the sender's name |
+
+`{!Quote.GrandTotal}` merges as blank in a Classic template, so the body uses
+`TotalPrice`. That equals the grand total unless the Quote carries tax or
+shipping, which the demo quotes don't.
 
 It's a Classic HTML template (`custom`) with a plain-text version. Edit the
 wording in `force-app/main/default/email/Servomex/` and redeploy; the flow

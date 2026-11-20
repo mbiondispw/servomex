@@ -3,7 +3,7 @@
 <p>Dear {!Contact.FirstName},</p>
 <p>Please find attached our proposal for <strong>{!Quote.Name}</strong>.</p>
 <table style="border-collapse: collapse; font-size: 14px;">
-<tr><td style="padding: 2px 16px 2px 0;">Grand total</td><td style="padding: 2px 0;"><strong>{!Quote.GrandTotal}</strong></td></tr>
+<tr><td style="padding: 2px 16px 2px 0;">Grand total</td><td style="padding: 2px 0;"><strong>{!Quote.TotalPrice}</strong></td></tr>
 <tr><td style="padding: 2px 16px 2px 0;">Valid until</td><td style="padding: 2px 0;"><strong>{!Quote.ExpirationDate}</strong></td></tr>
 </table>
 <p>If you have any questions, just reply to this email.</p>

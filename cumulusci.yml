@@ -26,7 +26,7 @@ tasks:
 
     deploy_servomex:
         group: Servomex
-        description: Deploy this repo's source directory (force-app), which holds the Demo Inbox Address module.
+        description: Deploy this repo's source directory (force-app), which holds the Demo Inbox Address module and Send Proposal.
         class_path: cumulusci.tasks.salesforce.Deploy
         options:
             path: force-app
@@ -44,3 +44,30 @@ tasks:
         class_path: tasks.rlm_apex_file.FileBasedAnonymousApexTask
         options:
             path: scripts/apex/rewriteContactEmailsToDemoInbox.apex
+
+    assign_servomex_quote_page:
+        group: Servomex
+        description: >
+            Assign Servomex_Quote_Record_Page (the Quote page with Send Proposal) as the
+            Quote record page in the RLM_Revenue_Cloud app for the given profiles. Uses an
+            app + profile assignment, the one layer rlm-base-dev's UX assembly doesn't
+            write. Re-runnable.
+        class_path: tasks.servomex_record_page.AssignRecordPageToProfiles
+        options:
+            api_names: RLM_Revenue_Cloud
+            flexipage: Servomex_Quote_Record_Page
+            sobject: Quote
+            profiles: Admin
+
+flows:
+    deploy_send_proposal:
+        group: Servomex
+        description: >
+            Deploy Send Proposal (screen flow, Quote action, Servomex_Proposal email template,
+            Servomex Quote page) and assign the page. Needs rlm-base-dev docgen in the org.
+            See docs/features/send-proposal.md.
+        steps:
+            1:
+                task: deploy_servomex
+            2:
+                task: assign_servomex_quote_page

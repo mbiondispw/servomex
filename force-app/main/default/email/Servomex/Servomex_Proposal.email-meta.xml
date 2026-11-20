@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <description>Send Proposal email: sent to the Quote Contact with the Proposal PDF attached. Related to Quote.</description>
+    <encodingKey>UTF-8</encodingKey>
+    <name>Servomex Proposal</name>
+    <style>none</style>
+    <subject>Servomex proposal {!Quote.QuoteNumber}</subject>
+    <textOnly>Dear {!Contact.FirstName},
+
+Please find attached our proposal for {!Quote.Name}.
+
+Grand total: {!Quote.GrandTotal}
+Valid until: {!Quote.ExpirationDate}
+
+If you have any questions, just reply to this email.
+
+Kind regards,
+{!User.FirstName} {!User.LastName}
+Servomex</textOnly>
+    <type>custom</type>
+    <uiType>Aloha</uiType>
+</EmailTemplate>

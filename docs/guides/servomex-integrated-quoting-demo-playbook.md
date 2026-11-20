@@ -274,7 +274,7 @@ steps. Personas are Servomex's own roles.
 | 4. Auto-added value lines | 6 min | CSR | 5, 6 | Spares, service, warranty and expenses are added and priced by policy |
 | 5. Sales discounting | 7 min | Sales | 8, 9 | Discount freely and see the margin impact live. Cost is read-only |
 | 6. Approval | 6 min | Finance / Credit | 10, 15 | Rules route the quote, and approvers see the live margin breakdown |
-| 7. Proposal | 3 min | CSR | 11 | Customer-ready PDF from the approved version |
+| 7. Proposal | 3 min | CSR | 11 | One click: Proposal PDF emailed to the Quote Contact, Quote marked Presented |
 | 8. PO change → Order | 5 min | CSR / Finance | 12, 13, 14, 16 | Revise and re-price; approvals re-evaluate on live data; then order |
 | 9. *(optional)* Billing and installed base | 10 min | Finance / Service | Cash Flow, Install Base Rev | Milestone billing and an assets-based service pipeline |
 
@@ -296,7 +296,9 @@ steps. Personas are Servomex's own roles.
 2. Create a quote: currency **USD**, region **Americas**, Incoterms **FCA**, T&Cs
    **Servomex Standard**, expected booking month, and lead time **6 months**.
    Delivery date derives from these.
-3. **Talk track:** Header data is entered once and drives rates, currency and
+3. Set the quote's **Contact** to **Lars Eriksson**. He is the Quote Contact who
+   receives the Proposal in Act 7, and Send Proposal refuses a quote without one.
+4. **Talk track:** Header data is entered once and drives rates, currency and
    approvals. No cell protection required.
 
 ### Act 2 — Configure the MiniMP 5200 (8 min)
@@ -406,10 +408,25 @@ steps. Personas are Servomex's own roles.
 
 ### Act 7 — Proposal (3 min)
 
-1. Generate the customer proposal with Document Generation. Show grouped
-   sections, payment milestones (10/15/25/50), Incoterms and T&Cs.
-2. **Talk track:** The quote version is the revision. No more `… Rev 2.xlsx`
-   saved under the opportunity.
+1. On the quote, click **Send Proposal**. The confirmation screen shows the
+   Quote Contact, Lars Eriksson, and his Demo Inbox Address. Keep the default
+   template, `RLM_QuoteProposal_CS`, and click **Send**.
+2. While the progress screen waits for the PDF: "The proposal is generated from
+   the quote itself, not from a copy of the spreadsheet."
+3. On **Sent to Lars Eriksson (…)**, close the window and show:
+   - Status is now **Presented**.
+   - The Proposal PDF under **Files**.
+   - The email logged in the **Activity** timeline.
+4. Open the inbox (`martin.biondi+lars.eriksson@piercewashington.com` lands in
+   the presenter's mailbox) and open the email and its attached PDF.
+5. **Talk track:** One click from approved quote to the customer's inbox, with
+   approved wording and a record of exactly what was sent. The quote version is
+   the revision. No more `… Rev 2.xlsx` saved under the opportunity.
+
+If the live build ran long, switch to the backup NordicGas AS quote, which
+already has Lars as Quote Contact. A re-send from Presented works and adds a
+second Proposal. See [Send Proposal](../features/send-proposal.md) for the
+refusals and recovery steps.
 
 ### Act 8 — PO change to order (5 min)
 
